@@ -1,5 +1,16 @@
 import { router } from "expo-router";
-import { Image, Pressable, SafeAreaView, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  SafeAreaView,
+  Text,
+  View,
+} from "react-native";
+
+import { supabase } from "../../src/lib/supabase";
+import { showAlert } from "../../src/utils/appAlert";
 
 const onboardingIcon = require("../../assets/images/android-icon-foreground.png");
 
@@ -11,6 +22,31 @@ const WARM_BROWN = "#92400E";
 const CARD_BG = "#FFF9F0";
 
 export default function OnboardingScreen() {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setIsLoggingOut(true);
+
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        showAlert("Çıkış yapılamadı", error.message);
+        return;
+      }
+
+      router.replace("/(auth)/welcome");
+    } catch (error) {
+      showAlert(
+        "Beklenmeyen hata",
+        error instanceof Error
+          ? error.message
+          : "Çıkış yapılırken hata oluştu.",
+      );
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
       <View
@@ -50,10 +86,6 @@ export default function OnboardingScreen() {
               alignItems: "center",
               justifyContent: "center",
               marginBottom: 22,
-              shadowColor: WARM_BROWN,
-              shadowOpacity: 0.12,
-              shadowRadius: 18,
-              shadowOffset: { width: 0, height: 10 },
             }}
           >
             <Image
@@ -210,6 +242,34 @@ export default function OnboardingScreen() {
             >
               Biriniz alanı oluşturur, diğeriniz davet koduyla katılır.
             </Text>
+            <Pressable
+              onPress={handleLogout}
+              disabled={isLoggingOut}
+              style={{
+                height: 48,
+                borderRadius: 18,
+                backgroundColor: "#FFF9F0",
+                borderWidth: 1,
+                borderColor: "#FCD34D",
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: 14,
+              }}
+            >
+              {isLoggingOut ? (
+                <ActivityIndicator color={WARM_BROWN} />
+              ) : (
+                <Text
+                  style={{
+                    color: WARM_BROWN,
+                    fontSize: 15,
+                    fontWeight: "900",
+                  }}
+                >
+                  Çıkış Yap
+                </Text>
+              )}
+            </Pressable>
           </View>
         </View>
       </View>

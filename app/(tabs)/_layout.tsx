@@ -1,18 +1,38 @@
 import { Tabs } from "expo-router";
-import {
-  House,
-  PlusCircle,
-  ReceiptText,
-  Settings,
-  ShoppingBasket,
-} from "lucide-react-native";
+import { Platform, Text, View } from "react-native";
 
 const SCREEN_BG = "#fcedd9";
-const TEXT_DARK = "#3B2414";
-const TEXT_MUTED = "#9A7A5A";
+const TAB_BG = "#FFF9F0";
+const TEXT_MUTED = "#9A6B3D";
 const PRIMARY_BLUE = "#2563EB";
-const CARD_BG = "#FFF9F0";
+const WARM_BROWN = "#92400E";
 const SOFT_YELLOW = "#FDE68A";
+
+function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
+  return (
+    <View
+      style={{
+        width: 34,
+        height: 30,
+        borderRadius: 14,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: focused ? "#DBEAFE" : "transparent",
+        borderWidth: focused ? 1 : 0,
+        borderColor: focused ? "#BFDBFE" : "transparent",
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 20,
+          opacity: focused ? 1 : 0.58,
+        }}
+      >
+        {icon}
+      </Text>
+    </View>
+  );
+}
 
 export default function TabsLayout() {
   return (
@@ -23,31 +43,35 @@ export default function TabsLayout() {
         },
         headerShadowVisible: false,
         headerTitleAlign: "center",
-        headerTintColor: TEXT_DARK,
+        headerTintColor: "#3B2414",
         headerTitleStyle: {
-          color: TEXT_DARK,
+          color: "#3B2414",
           fontSize: 16,
           fontWeight: "900",
         },
 
         tabBarActiveTintColor: PRIMARY_BLUE,
         tabBarInactiveTintColor: TEXT_MUTED,
-        tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "900",
           marginTop: 2,
         },
         tabBarStyle: {
-          height: 76,
+          height: Platform.OS === "ios" ? 82 : 68,
           paddingTop: 8,
-          paddingBottom: 12,
-          backgroundColor: CARD_BG,
+          paddingBottom: Platform.OS === "ios" ? 22 : 10,
+          backgroundColor: TAB_BG,
           borderTopWidth: 1,
           borderTopColor: SOFT_YELLOW,
+          shadowColor: WARM_BROWN,
+          shadowOpacity: 0.08,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: -6 },
+          elevation: 8,
         },
-        tabBarItemStyle: {
-          borderRadius: 18,
+        sceneStyle: {
+          backgroundColor: SCREEN_BG,
         },
       }}
     >
@@ -55,12 +79,9 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: "Ana Sayfa",
-          tabBarIcon: ({ color, size, focused }) => (
-            <House
-              color={color}
-              size={focused ? size + 2 : size}
-              strokeWidth={focused ? 3 : 2.3}
-            />
+          tabBarLabel: "Ana Sayfa",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon icon={focused ? "🏝️" : "🏠"} focused={focused} />
           ),
         }}
       />
@@ -69,12 +90,9 @@ export default function TabsLayout() {
         name="add"
         options={{
           title: "Ekle",
-          tabBarIcon: ({ color, size, focused }) => (
-            <PlusCircle
-              color={color}
-              size={focused ? size + 2 : size}
-              strokeWidth={focused ? 3 : 2.3}
-            />
+          tabBarLabel: "Ekle",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon icon={focused ? "🌺" : "➕"} focused={focused} />
           ),
         }}
       />
@@ -84,12 +102,8 @@ export default function TabsLayout() {
         options={{
           title: "Harcamalar",
           tabBarLabel: "Harcamalar",
-          tabBarIcon: ({ color, size, focused }) => (
-            <ReceiptText
-              color={color}
-              size={focused ? size + 2 : size}
-              strokeWidth={focused ? 3 : 2.3}
-            />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon icon={focused ? "🧾" : "📋"} focused={focused} />
           ),
         }}
       />
@@ -99,12 +113,8 @@ export default function TabsLayout() {
         options={{
           title: "Hazır",
           tabBarLabel: "Hazır",
-          tabBarIcon: ({ color, size, focused }) => (
-            <ShoppingBasket
-              color={color}
-              size={focused ? size + 2 : size}
-              strokeWidth={focused ? 3 : 2.3}
-            />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon icon={focused ? "🧺" : "🐚"} focused={focused} />
           ),
         }}
       />
@@ -113,12 +123,9 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: "Ayarlar",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Settings
-              color={color}
-              size={focused ? size + 2 : size}
-              strokeWidth={focused ? 3 : 2.3}
-            />
+          tabBarLabel: "Ayarlar",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon icon={focused ? "🌴" : "⚙️"} focused={focused} />
           ),
         }}
       />

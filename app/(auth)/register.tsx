@@ -1,13 +1,12 @@
+import { AppScreen } from "@/components/AppScreen";
 import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
@@ -15,6 +14,7 @@ import {
 } from "react-native";
 
 import { supabase } from "../../src/lib/supabase";
+import { showAlert } from "../../src/utils/appAlert";
 
 const registerIcon = require("../../assets/images/android-icon-foreground.png");
 
@@ -24,6 +24,8 @@ const TEXT_MUTED = "#7C5A3A";
 const PRIMARY_BLUE = "#2563EB";
 const WARM_BROWN = "#92400E";
 const CARD_BG = "#FFF9F0";
+const SOFT_YELLOW = "#FDE68A";
+const INPUT_BORDER = "#FCD34D";
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState("");
@@ -37,12 +39,12 @@ export default function RegisterScreen() {
     const trimmedEmail = email.trim();
 
     if (!trimmedFullName || !trimmedEmail || !password.trim()) {
-      Alert.alert("Eksik bilgi", "Ad, e-posta ve şifre alanlarını doldur.");
+      showAlert("Eksik bilgi", "Ad, e-posta ve şifre alanlarını doldur.");
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert("Zayıf şifre", "Şifre en az 6 karakter olmalı.");
+      showAlert("Zayıf şifre", "Şifre en az 6 karakter olmalı.");
       return;
     }
 
@@ -60,34 +62,33 @@ export default function RegisterScreen() {
       });
 
       if (error) {
-        Alert.alert("Kayıt başarısız", error.message);
+        showAlert("Kayıt başarısız", error.message);
         return;
       }
 
       if (data.user) {
-        const { error: profileError } = await supabase.from("profiles").insert({
+        const { error: profileError } = await supabase.from("profiles").upsert({
           id: data.user.id,
           full_name: trimmedFullName,
         });
 
         if (profileError) {
-          Alert.alert("Profil oluşturulamadı", profileError.message);
+          showAlert("Profil oluşturulamadı", profileError.message);
           return;
         }
       }
 
-      Alert.alert(
-        "Kayıt oluşturuldu",
-        "Şimdi giriş yaparak devam edebilirsin.",
-        [
-          {
-            text: "Tamam",
-            onPress: () => router.replace("/(auth)/login"),
-          },
-        ],
-      );
+      setFullName("");
+      setEmail("");
+      setPassword("");
+
+      showAlert("Kayıt oluşturuldu", "Şimdi giriş yaparak devam edebilirsin.");
+
+      setTimeout(() => {
+        router.replace("/(auth)/login");
+      }, 450);
     } catch (error) {
-      Alert.alert(
+      showAlert(
         "Beklenmeyen hata",
         error instanceof Error ? error.message : "Kayıt sırasında hata oluştu.",
       );
@@ -97,7 +98,7 @@ export default function RegisterScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <AppScreen backgroundColor={SCREEN_BG}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -143,25 +144,19 @@ export default function RegisterScreen() {
             <View
               style={{
                 alignSelf: "center",
-                width: 200,
-                height: 200,
-                borderRadius: 36,
-                backgroundColor: SCREEN_BG,
+                width: 188,
+                height: 188,
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: 24,
+                marginBottom: 22,
                 overflow: "hidden",
-                shadowColor: WARM_BROWN,
-                shadowOpacity: 0.14,
-                shadowRadius: 18,
-                shadowOffset: { width: 0, height: 10 },
               }}
             >
               <Image
                 source={registerIcon}
                 style={{
-                  width: "130%",
-                  height: "130%",
+                  width: "100%",
+                  height: "100%",
                 }}
                 resizeMode="contain"
               />
@@ -186,6 +181,7 @@ export default function RegisterScreen() {
                 color: TEXT_MUTED,
                 textAlign: "center",
                 marginBottom: 26,
+                fontWeight: "600",
               }}
             >
               Ortak bütçe alanını kullanmak için hesabını oluştur.
@@ -197,7 +193,7 @@ export default function RegisterScreen() {
                 borderRadius: 26,
                 backgroundColor: CARD_BG,
                 borderWidth: 1,
-                borderColor: "#FDE68A",
+                borderColor: SOFT_YELLOW,
                 shadowColor: WARM_BROWN,
                 shadowOpacity: 0.08,
                 shadowRadius: 14,
@@ -221,11 +217,13 @@ export default function RegisterScreen() {
                 placeholder="Görkem Serin"
                 placeholderTextColor="#B08A63"
                 autoCapitalize="words"
+                autoComplete="name"
+                textContentType="name"
                 style={{
                   height: 54,
                   borderRadius: 18,
                   borderWidth: 1,
-                  borderColor: "#FCD34D",
+                  borderColor: INPUT_BORDER,
                   backgroundColor: "#FFFFFF",
                   paddingHorizontal: 16,
                   fontSize: 16,
@@ -252,11 +250,13 @@ export default function RegisterScreen() {
                 placeholderTextColor="#B08A63"
                 autoCapitalize="none"
                 keyboardType="email-address"
+                autoComplete="email"
+                textContentType="emailAddress"
                 style={{
                   height: 54,
                   borderRadius: 18,
                   borderWidth: 1,
-                  borderColor: "#FCD34D",
+                  borderColor: INPUT_BORDER,
                   backgroundColor: "#FFFFFF",
                   paddingHorizontal: 16,
                   fontSize: 16,
@@ -282,11 +282,13 @@ export default function RegisterScreen() {
                 placeholder="En az 6 karakter"
                 placeholderTextColor="#B08A63"
                 secureTextEntry
+                autoComplete="password-new"
+                textContentType="newPassword"
                 style={{
                   height: 54,
                   borderRadius: 18,
                   borderWidth: 1,
-                  borderColor: "#FCD34D",
+                  borderColor: INPUT_BORDER,
                   backgroundColor: "#FFFFFF",
                   paddingHorizontal: 16,
                   fontSize: 16,
@@ -352,6 +354,6 @@ export default function RegisterScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

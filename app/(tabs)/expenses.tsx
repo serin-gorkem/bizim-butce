@@ -1,20 +1,20 @@
+import { AppScreen } from "@/components/AppScreen";
+import { ExpenseSwipeActions } from "@/components/ExpenseSwipeActions";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Modal,
   Pressable,
-  SafeAreaView,
   Text,
   TextInput,
   View,
 } from "react-native";
-import { Swipeable } from "react-native-gesture-handler";
 
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
+import { showAlert } from "../../src/utils/appAlert";
 import { formatCurrency, formatDate } from "../../src/utils/formatters";
 import { parsePositiveNumber } from "../../src/utils/parsers";
 import { firstOrNull } from "../../src/utils/relations";
@@ -205,19 +205,19 @@ export default function ExpensesScreen() {
 
   async function handleUpdateExpense() {
     if (!selectedExpense) {
-      Alert.alert("Harcama seçilmedi", "Düzenlenecek harcama bulunamadı.");
+      showAlert("Harcama seçilmedi", "Düzenlenecek harcama bulunamadı.");
       return;
     }
 
     const parsedAmount = parsePositiveNumber(editAmount);
 
     if (!parsedAmount) {
-      Alert.alert("Geçersiz tutar", "Lütfen geçerli bir tutar gir.");
+      showAlert("Geçersiz tutar", "Lütfen geçerli bir tutar gir.");
       return;
     }
 
     if (!editCategoryId) {
-      Alert.alert("Kategori seçilmedi", "Lütfen bir kategori seç.");
+      showAlert("Kategori seçilmedi", "Lütfen bir kategori seç.");
       return;
     }
 
@@ -236,16 +236,16 @@ export default function ExpensesScreen() {
         .eq("id", selectedExpense.id);
 
       if (error) {
-        Alert.alert("Güncellenemedi", error.message);
+        showAlert("Güncellenemedi", error.message);
         return;
       }
 
       closeEditModal();
       await loadExpenses();
 
-      Alert.alert("Güncellendi", "Harcama başarıyla güncellendi.");
+      showAlert("Güncellendi", "Harcama başarıyla güncellendi.");
     } catch (error) {
-      Alert.alert(
+      showAlert(
         "Beklenmeyen hata",
         error instanceof Error
           ? error.message
@@ -257,7 +257,7 @@ export default function ExpensesScreen() {
   }
 
   async function handleDeleteExpense(expense: Expense) {
-    Alert.alert("Harcamayı sil", "Bu harcamayı silmek istediğine emin misin?", [
+    showAlert("Harcamayı sil", "Bu harcamayı silmek istediğine emin misin?", [
       {
         text: "Vazgeç",
         style: "cancel",
@@ -272,7 +272,7 @@ export default function ExpensesScreen() {
             .eq("id", expense.id);
 
           if (error) {
-            Alert.alert("Silinemedi", error.message);
+            showAlert("Silinemedi", error.message);
             return;
           }
 
@@ -282,36 +282,9 @@ export default function ExpensesScreen() {
     ]);
   }
 
-  function renderRightActions(expense: Expense) {
-    return (
-      <Pressable
-        onPress={() => handleDeleteExpense(expense)}
-        style={{
-          width: 88,
-          minHeight: 74,
-          backgroundColor: "#DC2626",
-          borderRadius: 20,
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 12,
-        }}
-      >
-        <Text
-          style={{
-            color: "#FFFFFF",
-            fontSize: 14,
-            fontWeight: "900",
-          }}
-        >
-          Sil
-        </Text>
-      </Pressable>
-    );
-  }
-
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -325,13 +298,13 @@ export default function ExpensesScreen() {
             Harcamalar yükleniyor...
           </Text>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -361,12 +334,12 @@ export default function ExpensesScreen() {
             </Text>
           </View>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <AppScreen backgroundColor={SCREEN_BG}>
       <FlatList
         data={expenses}
         keyExtractor={(item) => item.id}
@@ -461,7 +434,7 @@ export default function ExpensesScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <Swipeable renderRightActions={() => renderRightActions(item)}>
+          <ExpenseSwipeActions onDelete={() => handleDeleteExpense(item)}>
             <Pressable
               onPress={() => openEditModal(item)}
               style={{
@@ -554,7 +527,7 @@ export default function ExpensesScreen() {
                 </Text>
               </View>
             </Pressable>
-          </Swipeable>
+          </ExpenseSwipeActions>
         )}
       />
 
@@ -580,11 +553,13 @@ export default function ExpensesScreen() {
           <View
             style={{
               width: "100%",
+              maxWidth: 390,
               borderRadius: 28,
               backgroundColor: CARD_BG,
               padding: 24,
               borderWidth: 1,
               borderColor: SOFT_YELLOW,
+              alignSelf: "center",
             }}
           >
             <View
@@ -790,6 +765,6 @@ export default function ExpensesScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

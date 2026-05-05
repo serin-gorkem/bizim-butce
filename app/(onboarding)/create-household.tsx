@@ -161,10 +161,6 @@ export default function CreateHouseholdScreen() {
                 alignItems: "center",
                 justifyContent: "center",
                 marginBottom: 24,
-                shadowColor: WARM_BROWN,
-                shadowOpacity: 0.12,
-                shadowRadius: 18,
-                shadowOffset: { width: 0, height: 10 },
               }}
             >
               <Image

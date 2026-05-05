@@ -1,13 +1,12 @@
+import { AppScreen } from "@/components/AppScreen";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
@@ -16,6 +15,7 @@ import {
 
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
+import { showAlert } from "../../src/utils/appAlert";
 
 const SCREEN_BG = "#fcedd9";
 const TEXT_DARK = "#3B2414";
@@ -140,7 +140,7 @@ export default function SettingsScreen() {
     const cleanedFullName = editedFullName.trim();
 
     if (!cleanedFullName) {
-      Alert.alert("Eksik bilgi", "İsim soyisim boş olamaz.");
+      showAlert("Eksik bilgi", "İsim soyisim boş olamaz.");
       return;
     }
 
@@ -153,7 +153,7 @@ export default function SettingsScreen() {
       } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        Alert.alert("Oturum hatası", "Kullanıcı bilgisi alınamadı.");
+        showAlert("Oturum hatası", "Kullanıcı bilgisi alınamadı.");
         return;
       }
 
@@ -165,7 +165,7 @@ export default function SettingsScreen() {
         .eq("id", user.id);
 
       if (profileError) {
-        Alert.alert("İsim güncellenemedi", profileError.message);
+        showAlert("İsim güncellenemedi", profileError.message);
         return;
       }
 
@@ -176,7 +176,7 @@ export default function SettingsScreen() {
       });
 
       if (authError) {
-        Alert.alert(
+        showAlert(
           "Profil güncellendi",
           "İsim kaydedildi ancak oturum verisi güncellenemedi.",
         );
@@ -185,9 +185,9 @@ export default function SettingsScreen() {
       closeEditNameModal();
       await loadSettingsData();
 
-      Alert.alert("Güncellendi", "İsim soyisim başarıyla güncellendi.");
+      showAlert("Güncellendi", "İsim soyisim başarıyla güncellendi.");
     } catch (error) {
-      Alert.alert(
+      showAlert(
         "Beklenmeyen hata",
         error instanceof Error
           ? error.message
@@ -199,7 +199,7 @@ export default function SettingsScreen() {
   }
 
   async function handleLogout() {
-    Alert.alert("Çıkış yap", "Hesabından çıkış yapmak istiyor musun?", [
+    showAlert("Çıkış yap", "Hesabından çıkış yapmak istiyor musun?", [
       {
         text: "Vazgeç",
         style: "cancel",
@@ -215,7 +215,7 @@ export default function SettingsScreen() {
           setIsLoggingOut(false);
 
           if (error) {
-            Alert.alert("Çıkış yapılamadı", error.message);
+            showAlert("Çıkış yapılamadı", error.message);
             return;
           }
 
@@ -227,7 +227,7 @@ export default function SettingsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -241,13 +241,13 @@ export default function SettingsScreen() {
             Ayarlar yükleniyor...
           </Text>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -277,12 +277,12 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <AppScreen backgroundColor={SCREEN_BG}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -587,7 +587,10 @@ export default function SettingsScreen() {
           }}
         >
           <KeyboardAvoidingView
-            style={{ width: "100%" }}
+            style={{
+              width: "100%",
+              maxWidth: 390,
+            }}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
           >
@@ -599,6 +602,7 @@ export default function SettingsScreen() {
                 padding: 24,
                 borderWidth: 1,
                 borderColor: SOFT_YELLOW,
+                alignSelf: "center",
               }}
             >
               <View
@@ -723,6 +727,6 @@ export default function SettingsScreen() {
           </KeyboardAvoidingView>
         </View>
       </Modal>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

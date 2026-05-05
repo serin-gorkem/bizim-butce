@@ -1,5 +1,6 @@
+import { AppScreen } from "@/components/AppScreen";
 import { router } from "expo-router";
-import { Image, Pressable, SafeAreaView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 
 const mascotImage = require("../../assets/images/welcome-mascot.png");
 
@@ -8,18 +9,22 @@ const TEXT_DARK = "#3B2414";
 const TEXT_MUTED = "#7C5A3A";
 const PRIMARY_BLUE = "#2563EB";
 const WARM_BROWN = "#92400E";
+const CARD_BG = "#FFF9F0";
+const SOFT_YELLOW = "#FDE68A";
 
 export default function WelcomeScreen() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
-      <View
-        style={{
-          flex: 1,
+    <AppScreen backgroundColor={SCREEN_BG}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
           paddingHorizontal: 24,
           paddingTop: 22,
-          paddingBottom: 22,
+          paddingBottom: 24,
           justifyContent: "center",
         }}
+        showsVerticalScrollIndicator={false}
       >
         <View style={{ alignItems: "center" }}>
           <View
@@ -28,7 +33,7 @@ export default function WelcomeScreen() {
               paddingVertical: 8,
               borderRadius: 999,
               backgroundColor: "#FFE8B8",
-              marginBottom: 12,
+              marginBottom: 10,
             }}
           >
             <Text
@@ -36,6 +41,7 @@ export default function WelcomeScreen() {
                 fontSize: 13,
                 fontWeight: "900",
                 color: WARM_BROWN,
+                textAlign: "center",
               }}
             >
               Sadece ikiniz için küçük bir bütçe adası
@@ -44,19 +50,20 @@ export default function WelcomeScreen() {
 
           <View
             style={{
-              width: 330,
-              height: 286,
+              width: "100%",
+              maxWidth: 330,
+              height: 260,
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 14,
-              backgroundColor: SCREEN_BG,
+              marginBottom: 10,
+              overflow: "hidden",
             }}
           >
             <Image
               source={mascotImage}
               style={{
-                width: 330,
-                height: 286,
+                width: "100%",
+                height: "100%",
               }}
               resizeMode="contain"
             />
@@ -82,6 +89,7 @@ export default function WelcomeScreen() {
               textAlign: "center",
               maxWidth: 330,
               marginBottom: 16,
+              fontWeight: "600",
             }}
           >
             Harcamalarınızı birlikte görün, küçük giderleri kaçırmayın ve ay
@@ -134,7 +142,20 @@ export default function WelcomeScreen() {
             </View>
           </View>
 
-          <View style={{ width: "100%" }}>
+          <View
+            style={{
+              width: "100%",
+              padding: 18,
+              borderRadius: 28,
+              backgroundColor: CARD_BG,
+              borderWidth: 1,
+              borderColor: SOFT_YELLOW,
+              shadowColor: WARM_BROWN,
+              shadowOpacity: 0.08,
+              shadowRadius: 14,
+              shadowOffset: { width: 0, height: 8 },
+            }}
+          >
             <Pressable
               onPress={() => router.push("/(auth)/login")}
               style={{
@@ -166,7 +187,9 @@ export default function WelcomeScreen() {
               style={{
                 height: 58,
                 borderRadius: 22,
-                backgroundColor: "#FFF9F0",
+                backgroundColor: "#FFFFFF",
+                borderWidth: 1,
+                borderColor: "#FCD34D",
                 alignItems: "center",
                 justifyContent: "center",
               }}
@@ -181,21 +204,22 @@ export default function WelcomeScreen() {
                 Hesap Oluştur
               </Text>
             </Pressable>
-          </View>
 
-          <Text
-            style={{
-              marginTop: 14,
-              fontSize: 13,
-              lineHeight: 19,
-              color: "#9A6B3D",
-              textAlign: "center",
-            }}
-          >
-            Hazır harcamalar, ortak liste ve aylık toplamlar tek yerde.
-          </Text>
+            <Text
+              style={{
+                marginTop: 14,
+                fontSize: 13,
+                lineHeight: 19,
+                color: "#9A6B3D",
+                textAlign: "center",
+                fontWeight: "600",
+              }}
+            >
+              Hazır harcamalar, ortak liste ve aylık toplamlar tek yerde.
+            </Text>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </AppScreen>
   );
 }

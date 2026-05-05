@@ -1,12 +1,11 @@
+import { AppScreen } from "@/components/AppScreen";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
@@ -14,6 +13,7 @@ import {
 } from "react-native";
 
 import { supabase } from "../../src/lib/supabase";
+import { showAlert } from "../../src/utils/appAlert";
 
 const joinHouseholdIcon = require("../../assets/images/ortak-alan-katil.png");
 
@@ -23,6 +23,8 @@ const TEXT_MUTED = "#7C5A3A";
 const PRIMARY_BLUE = "#2563EB";
 const WARM_BROWN = "#92400E";
 const CARD_BG = "#FFF9F0";
+const SOFT_YELLOW = "#FDE68A";
+const INPUT_BORDER = "#FCD34D";
 
 export default function JoinHouseholdScreen() {
   const [inviteCode, setInviteCode] = useState("");
@@ -32,7 +34,7 @@ export default function JoinHouseholdScreen() {
     const normalizedCode = inviteCode.trim().toUpperCase();
 
     if (!normalizedCode) {
-      Alert.alert("Eksik bilgi", "Davet kodunu gir.");
+      showAlert("Eksik bilgi", "Davet kodunu gir.");
       return;
     }
 
@@ -45,7 +47,7 @@ export default function JoinHouseholdScreen() {
       } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        Alert.alert("Oturum hatası", "Kullanıcı bilgisi alınamadı.");
+        showAlert("Oturum hatası", "Kullanıcı bilgisi alınamadı.");
         return;
       }
 
@@ -56,41 +58,58 @@ export default function JoinHouseholdScreen() {
         .maybeSingle();
 
       if (householdError) {
-        Alert.alert("Ortak alan bulunamadı", householdError.message);
+        showAlert("Ortak alan bulunamadı", householdError.message);
         return;
       }
 
       if (!household) {
-        Alert.alert(
-          "Kod geçersiz",
-          "Bu davet koduna ait ortak alan bulunamadı.",
-        );
+        showAlert("Kod geçersiz", "Bu davet koduna ait ortak alan bulunamadı.");
         return;
       }
 
-      const { error: memberError } = await supabase
-        .from("household_members")
-        .insert({
-          household_id: household.id,
-          user_id: user.id,
-          role: "member",
-        });
+      const { data: existingMember, error: existingMemberError } =
+        await supabase
+          .from("household_members")
+          .select("id")
+          .eq("household_id", household.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-      if (memberError) {
-        Alert.alert("Katılım başarısız", memberError.message);
+      if (existingMemberError) {
+        showAlert("Katılım kontrol edilemedi", existingMemberError.message);
         return;
+      }
+
+      if (!existingMember) {
+        const { error: memberError } = await supabase
+          .from("household_members")
+          .insert({
+            household_id: household.id,
+            user_id: user.id,
+            role: "member",
+          });
+
+        if (memberError) {
+          showAlert("Katılım başarısız", memberError.message);
+          return;
+        }
       }
 
       router.replace("/(tabs)/home");
     } catch (error) {
-      Alert.alert("Beklenmeyen hata", "Ortak alana katılırken hata oluştu.");
+      showAlert(
+        "Beklenmeyen hata",
+        error instanceof Error
+          ? error.message
+          : "Ortak alana katılırken hata oluştu.",
+      );
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <AppScreen backgroundColor={SCREEN_BG}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -108,22 +127,30 @@ export default function JoinHouseholdScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View>
+          <View style={{ zIndex: 10 }}>
             <Pressable
               onPress={() => router.back()}
               disabled={isLoading}
               style={{
                 alignSelf: "flex-start",
+
                 paddingHorizontal: 15,
+
                 paddingVertical: 8,
+
                 borderRadius: 999,
+
                 backgroundColor: "#FFE8B8",
+
+                zIndex: 10,
               }}
             >
               <Text
                 style={{
                   fontSize: 13,
+
                   fontWeight: "900",
+
                   color: WARM_BROWN,
                 }}
               >
@@ -132,26 +159,24 @@ export default function JoinHouseholdScreen() {
             </Pressable>
           </View>
 
-          <View style={{ paddingVertical: 18 }}>
+          <View style={{ paddingVertical: 0 }}>
             <View
+              pointerEvents="none"
               style={{
                 alignSelf: "center",
-                width: 168,
-                height: 148,
+                width: 336,
+                height: 296,
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: 24,
-                shadowColor: WARM_BROWN,
-                shadowOpacity: 0.12,
-                shadowRadius: 18,
-                shadowOffset: { width: 0, height: 10 },
+                marginBottom: 20,
+                overflow: "hidden",
               }}
             >
               <Image
                 source={joinHouseholdIcon}
                 style={{
-                  width: "300%",
-                  height: "300%",
+                  width: "150%",
+                  height: "150%",
                 }}
                 resizeMode="contain"
               />
@@ -187,7 +212,7 @@ export default function JoinHouseholdScreen() {
                 borderRadius: 26,
                 backgroundColor: CARD_BG,
                 borderWidth: 1,
-                borderColor: "#FDE68A",
+                borderColor: SOFT_YELLOW,
                 shadowColor: WARM_BROWN,
                 shadowOpacity: 0.08,
                 shadowRadius: 14,
@@ -217,7 +242,7 @@ export default function JoinHouseholdScreen() {
                   height: 54,
                   borderRadius: 18,
                   borderWidth: 1,
-                  borderColor: "#FCD34D",
+                  borderColor: INPUT_BORDER,
                   backgroundColor: "#FFFFFF",
                   paddingHorizontal: 16,
                   fontSize: 18,
@@ -268,6 +293,6 @@ export default function JoinHouseholdScreen() {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

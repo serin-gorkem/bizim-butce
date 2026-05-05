@@ -1,14 +1,13 @@
+import { AppScreen } from "@/components/AppScreen";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
@@ -17,6 +16,7 @@ import {
 
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
+import { showAlert } from "../../src/utils/appAlert";
 import { formatCurrency } from "../../src/utils/formatters";
 import { parsePositiveNumber } from "../../src/utils/parsers";
 import { firstOrNull } from "../../src/utils/relations";
@@ -230,17 +230,17 @@ export default function TemplatesScreen() {
     const parsedUnitPrice = parsePositiveNumber(unitPrice);
 
     if (!cleanedName) {
-      Alert.alert("Eksik bilgi", "Hazır harcama adı boş olamaz.");
+      showAlert("Eksik bilgi", "Hazır harcama adı boş olamaz.");
       return;
     }
 
     if (!categoryId) {
-      Alert.alert("Kategori seçilmedi", "Lütfen bir kategori seç.");
+      showAlert("Kategori seçilmedi", "Lütfen bir kategori seç.");
       return;
     }
 
     if (!parsedUnitPrice) {
-      Alert.alert("Geçersiz fiyat", "Lütfen geçerli bir birim fiyat gir.");
+      showAlert("Geçersiz fiyat", "Lütfen geçerli bir birim fiyat gir.");
       return;
     }
 
@@ -250,7 +250,7 @@ export default function TemplatesScreen() {
       const membership = await getCurrentUserHousehold();
 
       if (!membership) {
-        Alert.alert(
+        showAlert(
           "Ortak alan bulunamadı",
           "Önce bir ortak alana katılmalısın.",
         );
@@ -271,16 +271,16 @@ export default function TemplatesScreen() {
       });
 
       if (error) {
-        Alert.alert("Hazır harcama oluşturulamadı", error.message);
+        showAlert("Hazır harcama oluşturulamadı", error.message);
         return;
       }
 
       closeModal();
       await loadTemplates();
 
-      Alert.alert("Oluşturuldu", "Hazır harcama başarıyla oluşturuldu.");
+      showAlert("Oluşturuldu", "Hazır harcama başarıyla oluşturuldu.");
     } catch (error) {
-      Alert.alert(
+      showAlert(
         "Beklenmeyen hata",
         error instanceof Error
           ? error.message
@@ -293,7 +293,7 @@ export default function TemplatesScreen() {
 
   async function handleUpdateTemplate() {
     if (!selectedTemplate) {
-      Alert.alert("Hazır harcama seçilmedi", "Düzenlenecek kayıt bulunamadı.");
+      showAlert("Hazır harcama seçilmedi", "Düzenlenecek kayıt bulunamadı.");
       return;
     }
 
@@ -302,17 +302,17 @@ export default function TemplatesScreen() {
     const parsedUnitPrice = parsePositiveNumber(unitPrice);
 
     if (!cleanedName) {
-      Alert.alert("Eksik bilgi", "Hazır harcama adı boş olamaz.");
+      showAlert("Eksik bilgi", "Hazır harcama adı boş olamaz.");
       return;
     }
 
     if (!categoryId) {
-      Alert.alert("Kategori seçilmedi", "Lütfen bir kategori seç.");
+      showAlert("Kategori seçilmedi", "Lütfen bir kategori seç.");
       return;
     }
 
     if (!parsedUnitPrice) {
-      Alert.alert("Geçersiz fiyat", "Lütfen geçerli bir birim fiyat gir.");
+      showAlert("Geçersiz fiyat", "Lütfen geçerli bir birim fiyat gir.");
       return;
     }
 
@@ -331,16 +331,16 @@ export default function TemplatesScreen() {
         .eq("id", selectedTemplate.id);
 
       if (error) {
-        Alert.alert("Hazır harcama güncellenemedi", error.message);
+        showAlert("Hazır harcama güncellenemedi", error.message);
         return;
       }
 
       closeModal();
       await loadTemplates();
 
-      Alert.alert("Güncellendi", "Hazır harcama başarıyla güncellendi.");
+      showAlert("Güncellendi", "Hazır harcama başarıyla güncellendi.");
     } catch (error) {
-      Alert.alert(
+      showAlert(
         "Beklenmeyen hata",
         error instanceof Error
           ? error.message
@@ -356,7 +356,7 @@ export default function TemplatesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -370,13 +370,13 @@ export default function TemplatesScreen() {
             Hazır harcamalar yükleniyor...
           </Text>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -406,12 +406,12 @@ export default function TemplatesScreen() {
             </Text>
           </View>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <AppScreen backgroundColor={SCREEN_BG}>
       <View style={{ flex: 1, padding: 24 }}>
         <View
           style={{
@@ -627,13 +627,19 @@ export default function TemplatesScreen() {
           }}
         >
           <KeyboardAvoidingView
-            style={{ width: "100%" }}
+            style={{
+              width: "100%",
+              maxWidth: 390,
+            }}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
           >
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                flexGrow: 1,
+              }}
             >
               <View
                 style={{
@@ -643,6 +649,7 @@ export default function TemplatesScreen() {
                   padding: 24,
                   borderWidth: 1,
                   borderColor: SOFT_YELLOW,
+                  alignSelf: "center",
                 }}
               >
                 <View
@@ -892,6 +899,6 @@ export default function TemplatesScreen() {
           </KeyboardAvoidingView>
         </View>
       </Modal>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

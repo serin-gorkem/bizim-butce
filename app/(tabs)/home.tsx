@@ -2,20 +2,20 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   Modal,
   Pressable,
-  SafeAreaView,
   Text,
   TextInput,
   View,
 } from "react-native";
-import { Swipeable } from "react-native-gesture-handler";
 
+import { AppScreen } from "@/components/AppScreen";
+import { ExpenseSwipeActions } from "@/components/ExpenseSwipeActions";
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
+import { showAlert } from "../../src/utils/appAlert";
 import { formatCurrency, formatDate } from "../../src/utils/formatters";
 import { parsePositiveNumber } from "../../src/utils/parsers";
 import { firstOrNull } from "../../src/utils/relations";
@@ -29,6 +29,7 @@ const PRIMARY_BLUE = "#2563EB";
 const WARM_BROWN = "#92400E";
 const CARD_BG = "#FFF9F0";
 const SOFT_YELLOW = "#FDE68A";
+const INPUT_BORDER = "#FCD34D";
 
 type ExpenseRaw = {
   id: string;
@@ -352,19 +353,19 @@ export default function HomeScreen() {
 
   async function handleUpdateExpense() {
     if (!selectedExpense) {
-      Alert.alert("Harcama seçilmedi", "Düzenlenecek harcama bulunamadı.");
+      showAlert("Harcama seçilmedi", "Düzenlenecek harcama bulunamadı.");
       return;
     }
 
     const parsedAmount = parsePositiveNumber(editAmount);
 
     if (!parsedAmount) {
-      Alert.alert("Geçersiz tutar", "Lütfen geçerli bir tutar gir.");
+      showAlert("Geçersiz tutar", "Lütfen geçerli bir tutar gir.");
       return;
     }
 
     if (!editCategoryId) {
-      Alert.alert("Kategori seçilmedi", "Lütfen bir kategori seç.");
+      showAlert("Kategori seçilmedi", "Lütfen bir kategori seç.");
       return;
     }
 
@@ -383,16 +384,16 @@ export default function HomeScreen() {
         .eq("id", selectedExpense.id);
 
       if (error) {
-        Alert.alert("Güncellenemedi", error.message);
+        showAlert("Güncellenemedi", error.message);
         return;
       }
 
       closeEditModal();
       await loadHomeData();
 
-      Alert.alert("Güncellendi", "Harcama başarıyla güncellendi.");
+      showAlert("Güncellendi", "Harcama başarıyla güncellendi.");
     } catch (error) {
-      Alert.alert(
+      showAlert(
         "Beklenmeyen hata",
         error instanceof Error
           ? error.message
@@ -404,7 +405,7 @@ export default function HomeScreen() {
   }
 
   async function handleDeleteExpense(expense: Expense) {
-    Alert.alert("Harcamayı sil", "Bu harcamayı silmek istediğine emin misin?", [
+    showAlert("Harcamayı sil", "Bu harcamayı silmek istediğine emin misin?", [
       {
         text: "Vazgeç",
         style: "cancel",
@@ -419,7 +420,7 @@ export default function HomeScreen() {
             .eq("id", expense.id);
 
           if (error) {
-            Alert.alert("Silinemedi", error.message);
+            showAlert("Silinemedi", error.message);
             return;
           }
 
@@ -429,36 +430,9 @@ export default function HomeScreen() {
     ]);
   }
 
-  function renderRightActions(expense: Expense) {
-    return (
-      <Pressable
-        onPress={() => handleDeleteExpense(expense)}
-        style={{
-          width: 88,
-          minHeight: 74,
-          backgroundColor: "#DC2626",
-          borderRadius: 20,
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 12,
-        }}
-      >
-        <Text
-          style={{
-            color: "#FFFFFF",
-            fontSize: 14,
-            fontWeight: "900",
-          }}
-        >
-          Sil
-        </Text>
-      </Pressable>
-    );
-  }
-
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -472,13 +446,13 @@ export default function HomeScreen() {
             Ana sayfa yükleniyor...
           </Text>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -508,17 +482,19 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <AppScreen backgroundColor={SCREEN_BG}>
       <FlatList
         data={recentExpenses}
+        showsVerticalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
           padding: 24,
+
           paddingBottom: 48,
         }}
         ListHeaderComponent={
@@ -725,7 +701,7 @@ export default function HomeScreen() {
                       borderRadius: 20,
                       backgroundColor: "#FFFFFF",
                       borderWidth: 1,
-                      borderColor: "#FCD34D",
+                      borderColor: INPUT_BORDER,
                       marginBottom: 10,
                       flexDirection: "row",
                       justifyContent: "space-between",
@@ -790,7 +766,7 @@ export default function HomeScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <Swipeable renderRightActions={() => renderRightActions(item)}>
+          <ExpenseSwipeActions onDelete={() => handleDeleteExpense(item)}>
             <Pressable
               onPress={() => openEditModal(item)}
               style={{
@@ -872,7 +848,7 @@ export default function HomeScreen() {
                 </Text>
               </View>
             </Pressable>
-          </Swipeable>
+          </ExpenseSwipeActions>
         )}
       />
 
@@ -898,11 +874,13 @@ export default function HomeScreen() {
           <View
             style={{
               width: "100%",
+              maxWidth: 390,
               borderRadius: 28,
               backgroundColor: CARD_BG,
               padding: 24,
               borderWidth: 1,
               borderColor: SOFT_YELLOW,
+              alignSelf: "center",
             }}
           >
             <Text
@@ -949,7 +927,7 @@ export default function HomeScreen() {
                 height: 54,
                 borderRadius: 18,
                 borderWidth: 1,
-                borderColor: "#FCD34D",
+                borderColor: INPUT_BORDER,
                 backgroundColor: "#FFFFFF",
                 paddingHorizontal: 16,
                 fontSize: 20,
@@ -979,7 +957,7 @@ export default function HomeScreen() {
                 height: 54,
                 borderRadius: 18,
                 borderWidth: 1,
-                borderColor: "#FCD34D",
+                borderColor: INPUT_BORDER,
                 backgroundColor: "#FFFFFF",
                 paddingHorizontal: 16,
                 fontSize: 16,
@@ -1022,7 +1000,7 @@ export default function HomeScreen() {
                       borderRadius: 14,
                       backgroundColor: isSelected ? PRIMARY_BLUE : "#FFFFFF",
                       borderWidth: 1,
-                      borderColor: isSelected ? PRIMARY_BLUE : "#FCD34D",
+                      borderColor: isSelected ? PRIMARY_BLUE : INPUT_BORDER,
                       alignItems: "center",
                       justifyContent: "center",
                     }}
@@ -1072,7 +1050,7 @@ export default function HomeScreen() {
                 borderRadius: 20,
                 backgroundColor: "#FFFFFF",
                 borderWidth: 1,
-                borderColor: "#FCD34D",
+                borderColor: INPUT_BORDER,
                 alignItems: "center",
                 justifyContent: "center",
               }}
@@ -1090,6 +1068,6 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

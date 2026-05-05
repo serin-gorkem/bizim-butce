@@ -2,18 +2,18 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
   View,
 } from "react-native";
 
+import { AppScreen } from "@/components/AppScreen";
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
+import { showAlert } from "../../src/utils/appAlert";
 import { parsePositiveNumber } from "../../src/utils/parsers";
 
 const SCREEN_BG = "#fcedd9";
@@ -135,12 +135,12 @@ export default function AddExpenseScreen() {
     const parsedAmount = parsePositiveNumber(amount);
 
     if (!parsedAmount) {
-      Alert.alert("Geçersiz tutar", "Lütfen geçerli bir tutar gir.");
+      showAlert("Geçersiz tutar", "Lütfen geçerli bir tutar gir.");
       return;
     }
 
     if (!selectedCategory) {
-      Alert.alert("Kategori seçilmedi", "Lütfen bir kategori seç.");
+      showAlert("Kategori seçilmedi", "Lütfen bir kategori seç.");
       return;
     }
 
@@ -150,7 +150,7 @@ export default function AddExpenseScreen() {
       const membership = await getCurrentUserHousehold();
 
       if (!membership) {
-        Alert.alert(
+        showAlert(
           "Ortak alan bulunamadı",
           "Önce bir ortak alana katılmalısın.",
         );
@@ -163,7 +163,7 @@ export default function AddExpenseScreen() {
       } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        Alert.alert("Oturum hatası", "Kullanıcı bilgisi alınamadı.");
+        showAlert("Oturum hatası", "Kullanıcı bilgisi alınamadı.");
         return;
       }
 
@@ -182,7 +182,7 @@ export default function AddExpenseScreen() {
       const { error } = await supabase.from("expenses").insert(expensePayload);
 
       if (error) {
-        Alert.alert("Harcama eklenemedi", error.message);
+        showAlert("Harcama eklenemedi", error.message);
         return;
       }
 
@@ -192,7 +192,7 @@ export default function AddExpenseScreen() {
       setDescription("");
       setSelectedCategory(null);
 
-      Alert.alert(
+      showAlert(
         "Harcama eklendi",
         `${savedCategoryName} harcaması kaydedildi. Harcamaları görmek ister misin?`,
         [
@@ -207,7 +207,7 @@ export default function AddExpenseScreen() {
         ],
       );
     } catch (error) {
-      Alert.alert(
+      showAlert(
         "Beklenmeyen hata",
         error instanceof Error
           ? error.message
@@ -220,21 +220,21 @@ export default function AddExpenseScreen() {
 
   async function handleCreateTemplateExpense() {
     if (!selectedTemplate) {
-      Alert.alert("Template seçilmedi", "Lütfen bir hazır harcama seç.");
+      showAlert("Template seçilmedi", "Lütfen bir hazır harcama seç.");
       return;
     }
 
     const parsedQuantity = parsePositiveNumber(templateQuantity);
 
     if (!parsedQuantity) {
-      Alert.alert("Geçersiz adet", "Lütfen geçerli bir adet gir.");
+      showAlert("Geçersiz adet", "Lütfen geçerli bir adet gir.");
       return;
     }
 
     const unitPrice = Number(selectedTemplate.default_unit_price);
 
     if (Number.isNaN(unitPrice) || unitPrice <= 0) {
-      Alert.alert("Geçersiz fiyat", "Template birim fiyatı geçersiz.");
+      showAlert("Geçersiz fiyat", "Template birim fiyatı geçersiz.");
       return;
     }
 
@@ -246,7 +246,7 @@ export default function AddExpenseScreen() {
       const membership = await getCurrentUserHousehold();
 
       if (!membership) {
-        Alert.alert(
+        showAlert(
           "Ortak alan bulunamadı",
           "Önce bir ortak alana katılmalısın.",
         );
@@ -259,7 +259,7 @@ export default function AddExpenseScreen() {
       } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        Alert.alert("Oturum hatası", "Kullanıcı bilgisi alınamadı.");
+        showAlert("Oturum hatası", "Kullanıcı bilgisi alınamadı.");
         return;
       }
 
@@ -279,7 +279,7 @@ export default function AddExpenseScreen() {
       const { error } = await supabase.from("expenses").insert(expensePayload);
 
       if (error) {
-        Alert.alert("Template harcama eklenemedi", error.message);
+        showAlert("Template harcama eklenemedi", error.message);
         return;
       }
 
@@ -287,7 +287,7 @@ export default function AddExpenseScreen() {
 
       closeTemplateModal();
 
-      Alert.alert(
+      showAlert(
         "Harcama eklendi",
         `${savedTemplateName} harcaması kaydedildi. Harcamaları görmek ister misin?`,
         [
@@ -302,7 +302,7 @@ export default function AddExpenseScreen() {
         ],
       );
     } catch (error) {
-      Alert.alert(
+      showAlert(
         "Beklenmeyen hata",
         error instanceof Error
           ? error.message
@@ -315,7 +315,7 @@ export default function AddExpenseScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -329,13 +329,13 @@ export default function AddExpenseScreen() {
             Ekle ekranı yükleniyor...
           </Text>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+      <AppScreen backgroundColor={SCREEN_BG}>
         <View
           style={{
             flex: 1,
@@ -365,12 +365,12 @@ export default function AddExpenseScreen() {
             </Text>
           </View>
         </View>
-      </SafeAreaView>
+      </AppScreen>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <AppScreen backgroundColor={SCREEN_BG}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -754,11 +754,13 @@ export default function AddExpenseScreen() {
           <View
             style={{
               width: "100%",
+              maxWidth: 390,
               borderRadius: 28,
               backgroundColor: CARD_BG,
               padding: 24,
               borderWidth: 1,
               borderColor: SOFT_YELLOW,
+              alignSelf: "center",
             }}
           >
             <View
@@ -920,6 +922,6 @@ export default function AddExpenseScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

@@ -1,13 +1,12 @@
+import { AppScreen } from "@/components/AppScreen";
 import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
@@ -15,6 +14,7 @@ import {
 } from "react-native";
 
 import { supabase } from "../../src/lib/supabase";
+import { showAlert } from "../../src/utils/appAlert";
 
 const appIcon = require("../../assets/images/icon.png");
 
@@ -24,6 +24,8 @@ const TEXT_MUTED = "#7C5A3A";
 const PRIMARY_BLUE = "#2563EB";
 const WARM_BROWN = "#92400E";
 const CARD_BG = "#FFF9F0";
+const SOFT_YELLOW = "#FDE68A";
+const INPUT_BORDER = "#FCD34D";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -35,7 +37,7 @@ export default function LoginScreen() {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password.trim()) {
-      Alert.alert("Eksik bilgi", "E-posta ve şifre alanlarını doldur.");
+      showAlert("Eksik bilgi", "E-posta ve şifre alanlarını doldur.");
       return;
     }
 
@@ -48,13 +50,13 @@ export default function LoginScreen() {
       });
 
       if (error) {
-        Alert.alert("Giriş başarısız", error.message);
+        showAlert("Giriş başarısız", error.message);
         return;
       }
 
       router.replace("/");
     } catch (error) {
-      Alert.alert(
+      showAlert(
         "Beklenmeyen hata",
         error instanceof Error
           ? error.message
@@ -66,7 +68,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <AppScreen backgroundColor={SCREEN_BG}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -112,25 +114,19 @@ export default function LoginScreen() {
             <View
               style={{
                 alignSelf: "center",
-                width: 200,
-                height: 200,
-                borderRadius: 36,
-                backgroundColor: SCREEN_BG,
+                width: 188,
+                height: 188,
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: 24,
+                marginBottom: 22,
                 overflow: "hidden",
-                shadowColor: WARM_BROWN,
-                shadowOpacity: 0.14,
-                shadowRadius: 18,
-                shadowOffset: { width: 0, height: 10 },
               }}
             >
               <Image
                 source={appIcon}
                 style={{
-                  width: "150%",
-                  height: "150%",
+                  width: "100%",
+                  height: "100%",
                 }}
                 resizeMode="contain"
               />
@@ -155,6 +151,7 @@ export default function LoginScreen() {
                 color: TEXT_MUTED,
                 textAlign: "center",
                 marginBottom: 26,
+                fontWeight: "600",
               }}
             >
               Ortak bütçenize devam etmek için giriş yap.
@@ -166,7 +163,7 @@ export default function LoginScreen() {
                 borderRadius: 26,
                 backgroundColor: CARD_BG,
                 borderWidth: 1,
-                borderColor: "#FDE68A",
+                borderColor: SOFT_YELLOW,
                 shadowColor: WARM_BROWN,
                 shadowOpacity: 0.08,
                 shadowRadius: 14,
@@ -191,11 +188,13 @@ export default function LoginScreen() {
                 placeholderTextColor="#B08A63"
                 autoCapitalize="none"
                 keyboardType="email-address"
+                autoComplete="email"
+                textContentType="emailAddress"
                 style={{
                   height: 54,
                   borderRadius: 18,
                   borderWidth: 1,
-                  borderColor: "#FCD34D",
+                  borderColor: INPUT_BORDER,
                   backgroundColor: "#FFFFFF",
                   paddingHorizontal: 16,
                   fontSize: 16,
@@ -221,11 +220,13 @@ export default function LoginScreen() {
                 placeholder="Şifren"
                 placeholderTextColor="#B08A63"
                 secureTextEntry
+                autoComplete="password"
+                textContentType="password"
                 style={{
                   height: 54,
                   borderRadius: 18,
                   borderWidth: 1,
-                  borderColor: "#FCD34D",
+                  borderColor: INPUT_BORDER,
                   backgroundColor: "#FFFFFF",
                   paddingHorizontal: 16,
                   fontSize: 16,
@@ -291,6 +292,6 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
