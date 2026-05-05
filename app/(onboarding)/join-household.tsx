@@ -2,16 +2,27 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   SafeAreaView,
+  ScrollView,
   Text,
   TextInput,
   View,
 } from "react-native";
 
 import { supabase } from "../../src/lib/supabase";
+
+const joinHouseholdIcon = require("../../assets/images/ortak-alan-katil.png");
+
+const SCREEN_BG = "#fcedd9";
+const TEXT_DARK = "#3B2414";
+const TEXT_MUTED = "#7C5A3A";
+const PRIMARY_BLUE = "#2563EB";
+const WARM_BROWN = "#92400E";
+const CARD_BG = "#FFF9F0";
 
 export default function JoinHouseholdScreen() {
   const [inviteCode, setInviteCode] = useState("");
@@ -79,18 +90,23 @@ export default function JoinHouseholdScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
       >
-        <View
-          style={{
-            flex: 1,
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
             paddingHorizontal: 24,
-            paddingVertical: 28,
+            paddingTop: 22,
+            paddingBottom: 24,
             justifyContent: "space-between",
           }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <View>
             <Pressable
@@ -98,19 +114,17 @@ export default function JoinHouseholdScreen() {
               disabled={isLoading}
               style={{
                 alignSelf: "flex-start",
-                paddingHorizontal: 14,
+                paddingHorizontal: 15,
                 paddingVertical: 8,
                 borderRadius: 999,
-                backgroundColor: "#EDE9FE",
-                borderWidth: 1,
-                borderColor: "#DDD6FE",
+                backgroundColor: "#FFE8B8",
               }}
             >
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: "800",
-                  color: "#5B21B6",
+                  fontWeight: "900",
+                  color: WARM_BROWN,
                 }}
               >
                 Geri
@@ -118,78 +132,36 @@ export default function JoinHouseholdScreen() {
             </Pressable>
           </View>
 
-          <View>
+          <View style={{ paddingVertical: 18 }}>
             <View
               style={{
                 alignSelf: "center",
-                width: 130,
-                height: 130,
-                borderRadius: 38,
-                backgroundColor: "#DBEAFE",
+                width: 168,
+                height: 148,
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: 28,
-                borderWidth: 6,
-                borderColor: "#FFFFFF",
-                shadowColor: "#1E3A8A",
-                shadowOpacity: 0.14,
+                marginBottom: 24,
+                shadowColor: WARM_BROWN,
+                shadowOpacity: 0.12,
                 shadowRadius: 18,
                 shadowOffset: { width: 0, height: 10 },
               }}
             >
-              <View
+              <Image
+                source={joinHouseholdIcon}
                 style={{
-                  width: 84,
-                  height: 84,
-                  borderRadius: 42,
-                  backgroundColor: "#2563EB",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: "300%",
+                  height: "300%",
                 }}
-              >
-                <Text
-                  style={{
-                    color: "#FFFFFF",
-                    fontSize: 32,
-                    fontWeight: "900",
-                  }}
-                >
-                  Kod
-                </Text>
-              </View>
-
-              <View
-                style={{
-                  position: "absolute",
-                  right: 14,
-                  bottom: 12,
-                  width: 38,
-                  height: 38,
-                  borderRadius: 14,
-                  backgroundColor: "#7C3AED",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: 3,
-                  borderColor: "#FFFFFF",
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#FFFFFF",
-                    fontSize: 18,
-                    fontWeight: "900",
-                  }}
-                >
-                  →
-                </Text>
-              </View>
+                resizeMode="contain"
+              />
             </View>
 
             <Text
               style={{
                 fontSize: 36,
                 fontWeight: "900",
-                color: "#111827",
+                color: TEXT_DARK,
                 textAlign: "center",
                 marginBottom: 8,
               }}
@@ -200,10 +172,10 @@ export default function JoinHouseholdScreen() {
             <Text
               style={{
                 fontSize: 16,
-                lineHeight: 24,
-                color: "#6B7280",
+                lineHeight: 23,
+                color: TEXT_MUTED,
                 textAlign: "center",
-                marginBottom: 32,
+                marginBottom: 26,
               }}
             >
               Eşinin oluşturduğu ortak alanın davet kodunu gir.
@@ -212,17 +184,21 @@ export default function JoinHouseholdScreen() {
             <View
               style={{
                 padding: 20,
-                borderRadius: 24,
-                backgroundColor: "#FFFFFF",
+                borderRadius: 26,
+                backgroundColor: CARD_BG,
                 borderWidth: 1,
-                borderColor: "#BFDBFE",
+                borderColor: "#FDE68A",
+                shadowColor: WARM_BROWN,
+                shadowOpacity: 0.08,
+                shadowRadius: 14,
+                shadowOffset: { width: 0, height: 8 },
               }}
             >
               <Text
                 style={{
                   fontSize: 14,
-                  fontWeight: "800",
-                  color: "#111827",
+                  fontWeight: "900",
+                  color: TEXT_DARK,
                   marginBottom: 8,
                 }}
               >
@@ -233,18 +209,21 @@ export default function JoinHouseholdScreen() {
                 value={inviteCode}
                 onChangeText={setInviteCode}
                 placeholder="Örn: RTSKYK"
+                placeholderTextColor="#B08A63"
                 autoCapitalize="characters"
                 autoCorrect={false}
+                returnKeyType="done"
                 style={{
                   height: 54,
-                  borderRadius: 16,
+                  borderRadius: 18,
                   borderWidth: 1,
-                  borderColor: "#D1D5DB",
-                  backgroundColor: "#F9FAFB",
+                  borderColor: "#FCD34D",
+                  backgroundColor: "#FFFFFF",
                   paddingHorizontal: 16,
                   fontSize: 18,
                   letterSpacing: 2,
-                  fontWeight: "800",
+                  fontWeight: "900",
+                  color: TEXT_DARK,
                   marginBottom: 20,
                 }}
               />
@@ -254,12 +233,12 @@ export default function JoinHouseholdScreen() {
                 disabled={isLoading}
                 style={{
                   height: 56,
-                  borderRadius: 18,
-                  backgroundColor: isLoading ? "#93C5FD" : "#2563EB",
+                  borderRadius: 20,
+                  backgroundColor: isLoading ? "#93C5FD" : PRIMARY_BLUE,
                   alignItems: "center",
                   justifyContent: "center",
-                  shadowColor: "#2563EB",
-                  shadowOpacity: 0.2,
+                  shadowColor: PRIMARY_BLUE,
+                  shadowOpacity: 0.22,
                   shadowRadius: 12,
                   shadowOffset: { width: 0, height: 8 },
                 }}
@@ -281,13 +260,13 @@ export default function JoinHouseholdScreen() {
             style={{
               fontSize: 13,
               lineHeight: 19,
-              color: "#6B7280",
+              color: "#9A6B3D",
               textAlign: "center",
             }}
           >
             Davet kodunu büyük/küçük harf fark etmeksizin girebilirsin.
           </Text>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

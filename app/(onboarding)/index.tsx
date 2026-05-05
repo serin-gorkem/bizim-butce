@@ -1,137 +1,76 @@
 import { router } from "expo-router";
-import { Pressable, SafeAreaView, Text, View } from "react-native";
+import { Image, Pressable, SafeAreaView, Text, View } from "react-native";
+
+const onboardingIcon = require("../../assets/images/android-icon-foreground.png");
+
+const SCREEN_BG = "#fcedd9";
+const TEXT_DARK = "#3B2414";
+const TEXT_MUTED = "#7C5A3A";
+const PRIMARY_BLUE = "#2563EB";
+const WARM_BROWN = "#92400E";
+const CARD_BG = "#FFF9F0";
 
 export default function OnboardingScreen() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
       <View
         style={{
           flex: 1,
           paddingHorizontal: 24,
-          paddingTop: 28,
+          paddingTop: 22,
           paddingBottom: 24,
-          justifyContent: "space-between",
+          justifyContent: "center",
         }}
       >
-        <View
-          style={{
-            alignSelf: "center",
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            borderRadius: 999,
-            backgroundColor: "#EDE9FE",
-            borderWidth: 1,
-            borderColor: "#DDD6FE",
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "800",
-              color: "#5B21B6",
-            }}
-          >
-            Birlikte başlamak için küçük bir adım
-          </Text>
-        </View>
-
         <View style={{ alignItems: "center" }}>
           <View
             style={{
-              width: 170,
-              height: 170,
-              borderRadius: 44,
-              backgroundColor: "#DBEAFE",
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 999,
+              backgroundColor: "#FFE8B8",
+              marginBottom: 18,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: "900",
+                color: WARM_BROWN,
+              }}
+            >
+              Birlikte başlamak için küçük bir adım
+            </Text>
+          </View>
+
+          <View
+            style={{
+              width: 178,
+              height: 154,
               alignItems: "center",
               justifyContent: "center",
-              marginBottom: 30,
-              borderWidth: 8,
-              borderColor: "#FFFFFF",
-              shadowColor: "#1E3A8A",
-              shadowOpacity: 0.14,
+              marginBottom: 22,
+              shadowColor: WARM_BROWN,
+              shadowOpacity: 0.12,
               shadowRadius: 18,
               shadowOffset: { width: 0, height: 10 },
             }}
           >
-            <View
+            <Image
+              source={onboardingIcon}
               style={{
-                position: "absolute",
-                top: 22,
-                left: 26,
-                width: 42,
-                height: 42,
-                borderRadius: 21,
-                backgroundColor: "#60A5FA",
-                transform: [{ rotate: "-18deg" }],
+                width: "100%",
+                height: "100%",
               }}
+              resizeMode="contain"
             />
-
-            <View
-              style={{
-                position: "absolute",
-                top: 22,
-                right: 26,
-                width: 42,
-                height: 42,
-                borderRadius: 21,
-                backgroundColor: "#60A5FA",
-                transform: [{ rotate: "18deg" }],
-              }}
-            />
-
-            <View
-              style={{
-                width: 104,
-                height: 104,
-                borderRadius: 52,
-                backgroundColor: "#2563EB",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#FFFFFF",
-                  fontSize: 30,
-                  fontWeight: "900",
-                }}
-              >
-                BB
-              </Text>
-            </View>
-
-            <View
-              style={{
-                position: "absolute",
-                right: 22,
-                bottom: 20,
-                width: 42,
-                height: 42,
-                borderRadius: 14,
-                backgroundColor: "#7C3AED",
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 4,
-                borderColor: "#FFFFFF",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#FFFFFF",
-                  fontSize: 20,
-                  fontWeight: "900",
-                }}
-              >
-                +
-              </Text>
-            </View>
           </View>
 
           <Text
             style={{
               fontSize: 38,
               fontWeight: "900",
-              color: "#111827",
+              color: TEXT_DARK,
               textAlign: "center",
               marginBottom: 10,
             }}
@@ -141,11 +80,12 @@ export default function OnboardingScreen() {
 
           <Text
             style={{
-              fontSize: 17,
-              lineHeight: 25,
-              color: "#6B7280",
+              fontSize: 16,
+              lineHeight: 23,
+              color: TEXT_MUTED,
               textAlign: "center",
-              maxWidth: 330,
+              maxWidth: 335,
+              marginBottom: 20,
             }}
           >
             Harcamaları birlikte takip etmek için bir ortak alan oluştur veya
@@ -156,13 +96,13 @@ export default function OnboardingScreen() {
             style={{
               flexDirection: "row",
               gap: 10,
-              marginTop: 24,
+              marginBottom: 26,
             }}
           >
             <View
               style={{
                 paddingHorizontal: 14,
-                paddingVertical: 9,
+                paddingVertical: 8,
                 borderRadius: 999,
                 backgroundColor: "#DBEAFE",
               }}
@@ -170,7 +110,7 @@ export default function OnboardingScreen() {
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: "800",
+                  fontWeight: "900",
                   color: "#1E40AF",
                 }}
               >
@@ -181,85 +121,96 @@ export default function OnboardingScreen() {
             <View
               style={{
                 paddingHorizontal: 14,
-                paddingVertical: 9,
+                paddingVertical: 8,
                 borderRadius: 999,
-                backgroundColor: "#EDE9FE",
+                backgroundColor: "#FCE7F3",
               }}
             >
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: "800",
-                  color: "#5B21B6",
+                  fontWeight: "900",
+                  color: "#BE185D",
                 }}
               >
                 Tek bütçe
               </Text>
             </View>
           </View>
-        </View>
 
-        <View>
-          <Pressable
-            onPress={() => router.push("/(onboarding)/create-household")}
+          <View
             style={{
-              height: 58,
-              borderRadius: 20,
-              backgroundColor: "#2563EB",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 12,
-              shadowColor: "#2563EB",
-              shadowOpacity: 0.24,
+              width: "100%",
+              padding: 18,
+              borderRadius: 28,
+              backgroundColor: CARD_BG,
+              borderWidth: 1,
+              borderColor: "#FDE68A",
+              shadowColor: WARM_BROWN,
+              shadowOpacity: 0.08,
               shadowRadius: 14,
               shadowOffset: { width: 0, height: 8 },
             }}
           >
-            <Text
+            <Pressable
+              onPress={() => router.push("/(onboarding)/create-household")}
               style={{
-                color: "#FFFFFF",
-                fontSize: 16,
-                fontWeight: "900",
+                height: 58,
+                borderRadius: 22,
+                backgroundColor: PRIMARY_BLUE,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 12,
+                shadowColor: PRIMARY_BLUE,
+                shadowOpacity: 0.22,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 8 },
               }}
             >
-              Ortak Alan Oluştur
-            </Text>
-          </Pressable>
+              <Text
+                style={{
+                  color: "#FFFFFF",
+                  fontSize: 16,
+                  fontWeight: "900",
+                }}
+              >
+                Ortak Alan Oluştur
+              </Text>
+            </Pressable>
 
-          <Pressable
-            onPress={() => router.push("/(onboarding)/join-household")}
-            style={{
-              height: 58,
-              borderRadius: 20,
-              backgroundColor: "#FFFFFF",
-              borderWidth: 1,
-              borderColor: "#BFDBFE",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text
+            <Pressable
+              onPress={() => router.push("/(onboarding)/join-household")}
               style={{
-                color: "#1E3A8A",
-                fontSize: 16,
-                fontWeight: "900",
+                height: 58,
+                borderRadius: 22,
+                backgroundColor: "#FFFFFF",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 14,
               }}
             >
-              Davet Koduyla Katıl
-            </Text>
-          </Pressable>
+              <Text
+                style={{
+                  color: WARM_BROWN,
+                  fontSize: 16,
+                  fontWeight: "900",
+                }}
+              >
+                Davet Koduyla Katıl
+              </Text>
+            </Pressable>
 
-          <Text
-            style={{
-              marginTop: 18,
-              fontSize: 13,
-              lineHeight: 19,
-              color: "#6B7280",
-              textAlign: "center",
-            }}
-          >
-            Biriniz alanı oluşturur, diğeriniz davet koduyla katılır.
-          </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                lineHeight: 19,
+                color: "#9A6B3D",
+                textAlign: "center",
+              }}
+            >
+              Biriniz alanı oluşturur, diğeriniz davet koduyla katılır.
+            </Text>
+          </View>
         </View>
       </View>
     </SafeAreaView>

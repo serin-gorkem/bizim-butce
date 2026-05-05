@@ -19,6 +19,15 @@ import { formatCurrency, formatDate } from "../../src/utils/formatters";
 import { parsePositiveNumber } from "../../src/utils/parsers";
 import { firstOrNull } from "../../src/utils/relations";
 
+const SCREEN_BG = "#fcedd9";
+const TEXT_DARK = "#3B2414";
+const TEXT_MUTED = "#7C5A3A";
+const PRIMARY_BLUE = "#2563EB";
+const WARM_BROWN = "#92400E";
+const CARD_BG = "#FFF9F0";
+const SOFT_YELLOW = "#FDE68A";
+const INPUT_BORDER = "#FCD34D";
+
 type ExpenseRaw = {
   id: string;
   user_id: string;
@@ -281,7 +290,7 @@ export default function ExpensesScreen() {
           width: 88,
           minHeight: 74,
           backgroundColor: "#DC2626",
-          borderRadius: 18,
+          borderRadius: 20,
           alignItems: "center",
           justifyContent: "center",
           marginBottom: 12,
@@ -302,7 +311,7 @@ export default function ExpensesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
         <View
           style={{
             flex: 1,
@@ -311,8 +320,8 @@ export default function ExpensesScreen() {
             gap: 12,
           }}
         >
-          <ActivityIndicator color="#2563EB" />
-          <Text style={{ color: "#6B7280", fontWeight: "700" }}>
+          <ActivityIndicator color={PRIMARY_BLUE} />
+          <Text style={{ color: TEXT_MUTED, fontWeight: "800" }}>
             Harcamalar yükleniyor...
           </Text>
         </View>
@@ -322,7 +331,7 @@ export default function ExpensesScreen() {
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
         <View
           style={{
             flex: 1,
@@ -336,7 +345,7 @@ export default function ExpensesScreen() {
               width: "100%",
               padding: 20,
               borderRadius: 24,
-              backgroundColor: "#FFFFFF",
+              backgroundColor: CARD_BG,
               borderWidth: 1,
               borderColor: "#FCA5A5",
             }}
@@ -345,7 +354,7 @@ export default function ExpensesScreen() {
               style={{
                 color: "#DC2626",
                 textAlign: "center",
-                fontWeight: "800",
+                fontWeight: "900",
               }}
             >
               {errorMessage}
@@ -357,7 +366,7 @@ export default function ExpensesScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
       <FlatList
         data={expenses}
         keyExtractor={(item) => item.id}
@@ -371,12 +380,12 @@ export default function ExpensesScreen() {
               style={{
                 padding: 20,
                 borderRadius: 28,
-                backgroundColor: "#DBEAFE",
-                borderWidth: 6,
-                borderColor: "#FFFFFF",
+                backgroundColor: CARD_BG,
+                borderWidth: 1,
+                borderColor: SOFT_YELLOW,
                 marginBottom: 24,
-                shadowColor: "#1E3A8A",
-                shadowOpacity: 0.12,
+                shadowColor: WARM_BROWN,
+                shadowOpacity: 0.1,
                 shadowRadius: 18,
                 shadowOffset: { width: 0, height: 10 },
               }}
@@ -393,20 +402,14 @@ export default function ExpensesScreen() {
                     width: 66,
                     height: 66,
                     borderRadius: 24,
-                    backgroundColor: "#2563EB",
+                    backgroundColor: "#FFE8B8",
                     alignItems: "center",
                     justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: SOFT_YELLOW,
                   }}
                 >
-                  <Text
-                    style={{
-                      color: "#FFFFFF",
-                      fontSize: 28,
-                      fontWeight: "900",
-                    }}
-                  >
-                    ₺
-                  </Text>
+                  <Text style={{ fontSize: 34 }}>🧾</Text>
                 </View>
 
                 <View style={{ flex: 1 }}>
@@ -414,7 +417,7 @@ export default function ExpensesScreen() {
                     style={{
                       fontSize: 32,
                       fontWeight: "900",
-                      color: "#111827",
+                      color: TEXT_DARK,
                       marginBottom: 4,
                     }}
                   >
@@ -425,7 +428,8 @@ export default function ExpensesScreen() {
                     style={{
                       fontSize: 15,
                       lineHeight: 21,
-                      color: "#4B5563",
+                      color: TEXT_MUTED,
+                      fontWeight: "600",
                     }}
                   >
                     Ortak alana girilen tüm harcamalar.
@@ -439,17 +443,17 @@ export default function ExpensesScreen() {
           <View
             style={{
               padding: 24,
-              borderRadius: 24,
-              backgroundColor: "#FFFFFF",
+              borderRadius: 26,
+              backgroundColor: CARD_BG,
               borderWidth: 1,
-              borderColor: "#BFDBFE",
+              borderColor: SOFT_YELLOW,
             }}
           >
             <Text
               style={{
-                color: "#6B7280",
+                color: TEXT_MUTED,
                 textAlign: "center",
-                fontWeight: "700",
+                fontWeight: "800",
               }}
             >
               Henüz harcama eklenmedi.
@@ -463,9 +467,9 @@ export default function ExpensesScreen() {
               style={{
                 padding: 16,
                 borderRadius: 22,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: CARD_BG,
                 borderWidth: 1,
-                borderColor: "#BFDBFE",
+                borderColor: SOFT_YELLOW,
                 marginBottom: 12,
               }}
             >
@@ -483,7 +487,7 @@ export default function ExpensesScreen() {
                       paddingHorizontal: 10,
                       paddingVertical: 6,
                       borderRadius: 999,
-                      backgroundColor: "#EDE9FE",
+                      backgroundColor: "#FFE8B8",
                       marginBottom: 8,
                     }}
                   >
@@ -491,7 +495,7 @@ export default function ExpensesScreen() {
                       style={{
                         fontSize: 12,
                         fontWeight: "900",
-                        color: "#5B21B6",
+                        color: WARM_BROWN,
                       }}
                     >
                       {item.categories?.name ?? "Kategori yok"}
@@ -505,7 +509,7 @@ export default function ExpensesScreen() {
                         style={{
                           marginBottom: 4,
                           fontSize: 13,
-                          color: "#5B21B6",
+                          color: "#BE185D",
                           fontWeight: "800",
                         }}
                       >
@@ -519,8 +523,8 @@ export default function ExpensesScreen() {
                       style={{
                         marginBottom: 4,
                         fontSize: 15,
-                        color: "#111827",
-                        fontWeight: "800",
+                        color: TEXT_DARK,
+                        fontWeight: "900",
                       }}
                     >
                       {item.description}
@@ -531,7 +535,7 @@ export default function ExpensesScreen() {
                     style={{
                       marginTop: 2,
                       fontSize: 14,
-                      color: "#6B7280",
+                      color: TEXT_MUTED,
                     }}
                   >
                     {item.profiles?.full_name ?? "Bilinmeyen kullanıcı"} ·{" "}
@@ -543,7 +547,7 @@ export default function ExpensesScreen() {
                   style={{
                     fontSize: 16,
                     fontWeight: "900",
-                    color: "#1E3A8A",
+                    color: WARM_BROWN,
                   }}
                 >
                   {formatCurrency(item.amount)}
@@ -567,7 +571,7 @@ export default function ExpensesScreen() {
         <View
           style={{
             flex: 1,
-            backgroundColor: "rgba(30,58,138,0.45)",
+            backgroundColor: "rgba(59,36,20,0.45)",
             alignItems: "center",
             justifyContent: "center",
             padding: 24,
@@ -577,17 +581,34 @@ export default function ExpensesScreen() {
             style={{
               width: "100%",
               borderRadius: 28,
-              backgroundColor: "#FFFFFF",
+              backgroundColor: CARD_BG,
               padding: 24,
               borderWidth: 1,
-              borderColor: "#BFDBFE",
+              borderColor: SOFT_YELLOW,
             }}
           >
+            <View
+              style={{
+                alignSelf: "center",
+                width: 76,
+                height: 76,
+                borderRadius: 28,
+                backgroundColor: "#FFE8B8",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 18,
+                borderWidth: 1,
+                borderColor: SOFT_YELLOW,
+              }}
+            >
+              <Text style={{ fontSize: 34 }}>✏️</Text>
+            </View>
+
             <Text
               style={{
                 fontSize: 26,
                 fontWeight: "900",
-                color: "#111827",
+                color: TEXT_DARK,
                 textAlign: "center",
                 marginBottom: 8,
               }}
@@ -598,9 +619,10 @@ export default function ExpensesScreen() {
             <Text
               style={{
                 fontSize: 15,
-                color: "#6B7280",
+                color: TEXT_MUTED,
                 textAlign: "center",
                 marginBottom: 20,
+                fontWeight: "600",
               }}
             >
               Tutar, açıklama ve kategoriyi güncelleyebilirsin.
@@ -609,8 +631,8 @@ export default function ExpensesScreen() {
             <Text
               style={{
                 fontSize: 14,
-                fontWeight: "800",
-                color: "#111827",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 8,
               }}
             >
@@ -621,16 +643,18 @@ export default function ExpensesScreen() {
               value={editAmount}
               onChangeText={setEditAmount}
               placeholder="Örn: 350"
+              placeholderTextColor="#B08A63"
               keyboardType="decimal-pad"
               style={{
                 height: 54,
                 borderRadius: 18,
                 borderWidth: 1,
-                borderColor: "#D1D5DB",
-                backgroundColor: "#F9FAFB",
+                borderColor: INPUT_BORDER,
+                backgroundColor: "#FFFFFF",
                 paddingHorizontal: 16,
                 fontSize: 20,
-                fontWeight: "800",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 16,
               }}
             />
@@ -638,8 +662,8 @@ export default function ExpensesScreen() {
             <Text
               style={{
                 fontSize: 14,
-                fontWeight: "800",
-                color: "#111827",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 8,
               }}
             >
@@ -650,15 +674,17 @@ export default function ExpensesScreen() {
               value={editDescription}
               onChangeText={setEditDescription}
               placeholder="Örn: Migros alışverişi"
+              placeholderTextColor="#B08A63"
               style={{
                 height: 54,
                 borderRadius: 18,
                 borderWidth: 1,
-                borderColor: "#D1D5DB",
-                backgroundColor: "#F9FAFB",
+                borderColor: INPUT_BORDER,
+                backgroundColor: "#FFFFFF",
                 paddingHorizontal: 16,
                 fontSize: 16,
-                fontWeight: "500",
+                fontWeight: "600",
+                color: TEXT_DARK,
                 marginBottom: 16,
               }}
             />
@@ -666,8 +692,8 @@ export default function ExpensesScreen() {
             <Text
               style={{
                 fontSize: 14,
-                fontWeight: "800",
-                color: "#111827",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 8,
               }}
             >
@@ -693,10 +719,10 @@ export default function ExpensesScreen() {
                     style={{
                       paddingHorizontal: 12,
                       height: 40,
-                      borderRadius: 12,
-                      backgroundColor: isSelected ? "#2563EB" : "#F5FBFF",
+                      borderRadius: 14,
+                      backgroundColor: isSelected ? PRIMARY_BLUE : "#FFFFFF",
                       borderWidth: 1,
-                      borderColor: isSelected ? "#2563EB" : "#DBEAFE",
+                      borderColor: isSelected ? PRIMARY_BLUE : INPUT_BORDER,
                       alignItems: "center",
                       justifyContent: "center",
                     }}
@@ -704,8 +730,8 @@ export default function ExpensesScreen() {
                     <Text
                       style={{
                         fontSize: 13,
-                        fontWeight: "800",
-                        color: isSelected ? "#FFFFFF" : "#1E3A8A",
+                        fontWeight: "900",
+                        color: isSelected ? "#FFFFFF" : WARM_BROWN,
                       }}
                     >
                       {category.name}
@@ -720,8 +746,8 @@ export default function ExpensesScreen() {
               disabled={isSaving}
               style={{
                 height: 54,
-                borderRadius: 18,
-                backgroundColor: isSaving ? "#93C5FD" : "#2563EB",
+                borderRadius: 20,
+                backgroundColor: isSaving ? "#93C5FD" : PRIMARY_BLUE,
                 alignItems: "center",
                 justifyContent: "center",
                 marginBottom: 12,
@@ -743,17 +769,17 @@ export default function ExpensesScreen() {
               disabled={isSaving}
               style={{
                 height: 54,
-                borderRadius: 18,
+                borderRadius: 20,
                 backgroundColor: "#FFFFFF",
                 borderWidth: 1,
-                borderColor: "#BFDBFE",
+                borderColor: INPUT_BORDER,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
               <Text
                 style={{
-                  color: "#1E3A8A",
+                  color: WARM_BROWN,
                   fontSize: 16,
                   fontWeight: "900",
                 }}

@@ -16,6 +16,15 @@ import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
 import { parsePositiveNumber } from "../../src/utils/parsers";
 
+const SCREEN_BG = "#fcedd9";
+const TEXT_DARK = "#3B2414";
+const TEXT_MUTED = "#7C5A3A";
+const PRIMARY_BLUE = "#2563EB";
+const WARM_BROWN = "#92400E";
+const CARD_BG = "#FFF9F0";
+const SOFT_YELLOW = "#FDE68A";
+const INPUT_BORDER = "#FCD34D";
+
 type Category = {
   id: string;
   name: string;
@@ -306,7 +315,7 @@ export default function AddExpenseScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
         <View
           style={{
             flex: 1,
@@ -315,8 +324,8 @@ export default function AddExpenseScreen() {
             gap: 12,
           }}
         >
-          <ActivityIndicator color="#2563EB" />
-          <Text style={{ color: "#6B7280", fontWeight: "700" }}>
+          <ActivityIndicator color={PRIMARY_BLUE} />
+          <Text style={{ color: TEXT_MUTED, fontWeight: "800" }}>
             Ekle ekranı yükleniyor...
           </Text>
         </View>
@@ -326,7 +335,7 @@ export default function AddExpenseScreen() {
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
         <View
           style={{
             flex: 1,
@@ -340,7 +349,7 @@ export default function AddExpenseScreen() {
               width: "100%",
               padding: 20,
               borderRadius: 24,
-              backgroundColor: "#FFFFFF",
+              backgroundColor: CARD_BG,
               borderWidth: 1,
               borderColor: "#FCA5A5",
             }}
@@ -349,7 +358,7 @@ export default function AddExpenseScreen() {
               style={{
                 color: "#DC2626",
                 textAlign: "center",
-                fontWeight: "800",
+                fontWeight: "900",
               }}
             >
               {errorMessage}
@@ -361,7 +370,7 @@ export default function AddExpenseScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -369,17 +378,18 @@ export default function AddExpenseScreen() {
           paddingBottom: 48,
         }}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View
           style={{
             padding: 20,
             borderRadius: 28,
-            backgroundColor: "#DBEAFE",
-            borderWidth: 6,
-            borderColor: "#FFFFFF",
+            backgroundColor: CARD_BG,
+            borderWidth: 1,
+            borderColor: SOFT_YELLOW,
             marginBottom: 24,
-            shadowColor: "#1E3A8A",
-            shadowOpacity: 0.12,
+            shadowColor: WARM_BROWN,
+            shadowOpacity: 0.1,
             shadowRadius: 18,
             shadowOffset: { width: 0, height: 10 },
           }}
@@ -396,20 +406,14 @@ export default function AddExpenseScreen() {
                 width: 64,
                 height: 64,
                 borderRadius: 22,
-                backgroundColor: "#2563EB",
+                backgroundColor: "#FFE8B8",
                 alignItems: "center",
                 justifyContent: "center",
+                borderWidth: 1,
+                borderColor: SOFT_YELLOW,
               }}
             >
-              <Text
-                style={{
-                  color: "#FFFFFF",
-                  fontSize: 28,
-                  fontWeight: "900",
-                }}
-              >
-                ₺
-              </Text>
+              <Text style={{ fontSize: 34 }}>🌺</Text>
             </View>
 
             <View style={{ flex: 1 }}>
@@ -417,7 +421,7 @@ export default function AddExpenseScreen() {
                 style={{
                   fontSize: 30,
                   fontWeight: "900",
-                  color: "#111827",
+                  color: TEXT_DARK,
                   marginBottom: 4,
                 }}
               >
@@ -428,7 +432,8 @@ export default function AddExpenseScreen() {
                 style={{
                   fontSize: 15,
                   lineHeight: 21,
-                  color: "#4B5563",
+                  color: TEXT_MUTED,
+                  fontWeight: "600",
                 }}
               >
                 Hazır harcama seçebilir veya manuel harcama ekleyebilirsin.
@@ -442,17 +447,17 @@ export default function AddExpenseScreen() {
             style={{
               marginBottom: 28,
               padding: 18,
-              borderRadius: 24,
-              backgroundColor: "#FFFFFF",
+              borderRadius: 26,
+              backgroundColor: CARD_BG,
               borderWidth: 1,
-              borderColor: "#BFDBFE",
+              borderColor: SOFT_YELLOW,
             }}
           >
             <Text
               style={{
                 fontSize: 18,
                 fontWeight: "900",
-                color: "#111827",
+                color: TEXT_DARK,
                 marginBottom: 4,
               }}
             >
@@ -462,8 +467,9 @@ export default function AddExpenseScreen() {
             <Text
               style={{
                 fontSize: 14,
-                color: "#6B7280",
+                color: TEXT_MUTED,
                 marginBottom: 14,
+                fontWeight: "600",
               }}
             >
               Tek dokunuşla sık kullanılan harcamaları ekle.
@@ -483,11 +489,11 @@ export default function AddExpenseScreen() {
                   disabled={isSaving}
                   style={{
                     width: "47%",
-                    minHeight: 86,
-                    borderRadius: 18,
-                    backgroundColor: "#F5FBFF",
+                    minHeight: 90,
+                    borderRadius: 20,
+                    backgroundColor: "#FFFFFF",
                     borderWidth: 1,
-                    borderColor: "#DBEAFE",
+                    borderColor: INPUT_BORDER,
                     justifyContent: "center",
                     padding: 14,
                   }}
@@ -496,7 +502,7 @@ export default function AddExpenseScreen() {
                     style={{
                       fontSize: 16,
                       fontWeight: "900",
-                      color: "#1E3A8A",
+                      color: TEXT_DARK,
                     }}
                   >
                     {template.name}
@@ -507,7 +513,8 @@ export default function AddExpenseScreen() {
                       style={{
                         marginTop: 4,
                         fontSize: 13,
-                        color: "#6B7280",
+                        color: TEXT_MUTED,
+                        fontWeight: "600",
                       }}
                     >
                       {template.description}
@@ -518,8 +525,8 @@ export default function AddExpenseScreen() {
                     style={{
                       marginTop: 6,
                       fontSize: 13,
-                      color: "#5B21B6",
-                      fontWeight: "800",
+                      color: WARM_BROWN,
+                      fontWeight: "900",
                     }}
                   >
                     Birim: ₺{Number(template.default_unit_price).toFixed(2)}
@@ -533,17 +540,17 @@ export default function AddExpenseScreen() {
         <View
           style={{
             padding: 20,
-            borderRadius: 24,
-            backgroundColor: "#FFFFFF",
+            borderRadius: 26,
+            backgroundColor: CARD_BG,
             borderWidth: 1,
-            borderColor: "#BFDBFE",
+            borderColor: SOFT_YELLOW,
           }}
         >
           <Text
             style={{
               fontSize: 18,
               fontWeight: "900",
-              color: "#111827",
+              color: TEXT_DARK,
               marginBottom: 4,
             }}
           >
@@ -553,8 +560,9 @@ export default function AddExpenseScreen() {
           <Text
             style={{
               fontSize: 14,
-              color: "#6B7280",
+              color: TEXT_MUTED,
               marginBottom: 18,
+              fontWeight: "600",
             }}
           >
             Tutarı yaz, kategori seç ve kaydet.
@@ -563,8 +571,8 @@ export default function AddExpenseScreen() {
           <Text
             style={{
               fontSize: 14,
-              fontWeight: "800",
-              color: "#111827",
+              fontWeight: "900",
+              color: TEXT_DARK,
               marginBottom: 8,
             }}
           >
@@ -575,16 +583,18 @@ export default function AddExpenseScreen() {
             value={amount}
             onChangeText={setAmount}
             placeholder="Örn: 350"
+            placeholderTextColor="#B08A63"
             keyboardType="decimal-pad"
             style={{
               height: 56,
               borderRadius: 18,
               borderWidth: 1,
-              borderColor: "#D1D5DB",
-              backgroundColor: "#F9FAFB",
+              borderColor: INPUT_BORDER,
+              backgroundColor: "#FFFFFF",
               paddingHorizontal: 16,
               fontSize: 22,
-              fontWeight: "800",
+              fontWeight: "900",
+              color: TEXT_DARK,
               marginBottom: 20,
             }}
           />
@@ -592,8 +602,8 @@ export default function AddExpenseScreen() {
           <Text
             style={{
               fontSize: 14,
-              fontWeight: "800",
-              color: "#111827",
+              fontWeight: "900",
+              color: TEXT_DARK,
               marginBottom: 8,
             }}
           >
@@ -604,15 +614,17 @@ export default function AddExpenseScreen() {
             value={description}
             onChangeText={setDescription}
             placeholder="Örn: Migros alışverişi"
+            placeholderTextColor="#B08A63"
             style={{
               height: 54,
               borderRadius: 18,
               borderWidth: 1,
-              borderColor: "#D1D5DB",
-              backgroundColor: "#F9FAFB",
+              borderColor: INPUT_BORDER,
+              backgroundColor: "#FFFFFF",
               paddingHorizontal: 16,
               fontSize: 16,
-              fontWeight: "500",
+              fontWeight: "600",
+              color: TEXT_DARK,
               marginBottom: 20,
             }}
           />
@@ -620,8 +632,8 @@ export default function AddExpenseScreen() {
           <Text
             style={{
               fontSize: 14,
-              fontWeight: "800",
-              color: "#111827",
+              fontWeight: "900",
+              color: TEXT_DARK,
               marginBottom: 10,
             }}
           >
@@ -647,9 +659,9 @@ export default function AddExpenseScreen() {
                     width: "47%",
                     height: 56,
                     borderRadius: 18,
-                    backgroundColor: isSelected ? "#2563EB" : "#F5FBFF",
+                    backgroundColor: isSelected ? PRIMARY_BLUE : "#FFFFFF",
                     borderWidth: 1,
-                    borderColor: isSelected ? "#2563EB" : "#DBEAFE",
+                    borderColor: isSelected ? PRIMARY_BLUE : INPUT_BORDER,
                     alignItems: "center",
                     justifyContent: "center",
                   }}
@@ -657,8 +669,8 @@ export default function AddExpenseScreen() {
                   <Text
                     style={{
                       fontSize: 16,
-                      fontWeight: "800",
-                      color: isSelected ? "#FFFFFF" : "#1E3A8A",
+                      fontWeight: "900",
+                      color: isSelected ? "#FFFFFF" : WARM_BROWN,
                     }}
                   >
                     {category.name}
@@ -676,14 +688,14 @@ export default function AddExpenseScreen() {
                 paddingHorizontal: 14,
                 paddingVertical: 8,
                 borderRadius: 999,
-                backgroundColor: "#EDE9FE",
+                backgroundColor: "#FFE8B8",
               }}
             >
               <Text
                 style={{
-                  color: "#5B21B6",
+                  color: WARM_BROWN,
                   fontSize: 13,
-                  fontWeight: "800",
+                  fontWeight: "900",
                 }}
               >
                 Seçili kategori: {selectedCategory.name}
@@ -697,12 +709,12 @@ export default function AddExpenseScreen() {
             style={{
               height: 58,
               borderRadius: 20,
-              backgroundColor: isSaving ? "#93C5FD" : "#2563EB",
+              backgroundColor: isSaving ? "#93C5FD" : PRIMARY_BLUE,
               alignItems: "center",
               justifyContent: "center",
               marginTop: 24,
-              shadowColor: "#2563EB",
-              shadowOpacity: 0.2,
+              shadowColor: PRIMARY_BLUE,
+              shadowOpacity: 0.22,
               shadowRadius: 12,
               shadowOffset: { width: 0, height: 8 },
             }}
@@ -733,7 +745,7 @@ export default function AddExpenseScreen() {
         <View
           style={{
             flex: 1,
-            backgroundColor: "rgba(30,58,138,0.45)",
+            backgroundColor: "rgba(59,36,20,0.45)",
             alignItems: "center",
             justifyContent: "center",
             padding: 24,
@@ -743,10 +755,10 @@ export default function AddExpenseScreen() {
             style={{
               width: "100%",
               borderRadius: 28,
-              backgroundColor: "#FFFFFF",
+              backgroundColor: CARD_BG,
               padding: 24,
               borderWidth: 1,
-              borderColor: "#BFDBFE",
+              borderColor: SOFT_YELLOW,
             }}
           >
             <View
@@ -755,30 +767,22 @@ export default function AddExpenseScreen() {
                 width: 76,
                 height: 76,
                 borderRadius: 28,
-                backgroundColor: "#DBEAFE",
+                backgroundColor: "#FFE8B8",
                 alignItems: "center",
                 justifyContent: "center",
                 marginBottom: 18,
-                borderWidth: 4,
-                borderColor: "#FFFFFF",
+                borderWidth: 1,
+                borderColor: SOFT_YELLOW,
               }}
             >
-              <Text
-                style={{
-                  color: "#2563EB",
-                  fontSize: 30,
-                  fontWeight: "900",
-                }}
-              >
-                ₺
-              </Text>
+              <Text style={{ fontSize: 36 }}>🐚</Text>
             </View>
 
             <Text
               style={{
                 fontSize: 26,
                 fontWeight: "900",
-                color: "#111827",
+                color: TEXT_DARK,
                 textAlign: "center",
                 marginBottom: 8,
               }}
@@ -790,9 +794,10 @@ export default function AddExpenseScreen() {
               <Text
                 style={{
                   fontSize: 15,
-                  color: "#6B7280",
+                  color: TEXT_MUTED,
                   textAlign: "center",
                   marginBottom: 18,
+                  fontWeight: "600",
                 }}
               >
                 {selectedTemplate.description}
@@ -802,8 +807,8 @@ export default function AddExpenseScreen() {
             <Text
               style={{
                 fontSize: 14,
-                fontWeight: "800",
-                color: "#111827",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 8,
               }}
             >
@@ -815,15 +820,17 @@ export default function AddExpenseScreen() {
               onChangeText={setTemplateQuantity}
               keyboardType="decimal-pad"
               placeholder="Örn: 2"
+              placeholderTextColor="#B08A63"
               style={{
                 height: 54,
                 borderRadius: 18,
                 borderWidth: 1,
-                borderColor: "#D1D5DB",
-                backgroundColor: "#F9FAFB",
+                borderColor: INPUT_BORDER,
+                backgroundColor: "#FFFFFF",
                 paddingHorizontal: 16,
                 fontSize: 20,
-                fontWeight: "800",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 16,
               }}
             />
@@ -832,17 +839,17 @@ export default function AddExpenseScreen() {
               style={{
                 padding: 18,
                 borderRadius: 20,
-                backgroundColor: "#F5FBFF",
+                backgroundColor: "#FFFFFF",
                 borderWidth: 1,
-                borderColor: "#DBEAFE",
+                borderColor: INPUT_BORDER,
                 marginBottom: 20,
               }}
             >
               <Text
                 style={{
-                  color: "#6B7280",
+                  color: TEXT_MUTED,
                   fontSize: 14,
-                  fontWeight: "700",
+                  fontWeight: "800",
                   marginBottom: 4,
                 }}
               >
@@ -851,7 +858,7 @@ export default function AddExpenseScreen() {
 
               <Text
                 style={{
-                  color: "#1E3A8A",
+                  color: WARM_BROWN,
                   fontSize: 28,
                   fontWeight: "900",
                 }}
@@ -869,8 +876,8 @@ export default function AddExpenseScreen() {
               disabled={isSaving}
               style={{
                 height: 54,
-                borderRadius: 18,
-                backgroundColor: isSaving ? "#93C5FD" : "#2563EB",
+                borderRadius: 20,
+                backgroundColor: isSaving ? "#93C5FD" : PRIMARY_BLUE,
                 alignItems: "center",
                 justifyContent: "center",
                 marginBottom: 12,
@@ -892,17 +899,17 @@ export default function AddExpenseScreen() {
               disabled={isSaving}
               style={{
                 height: 54,
-                borderRadius: 18,
+                borderRadius: 20,
                 backgroundColor: "#FFFFFF",
                 borderWidth: 1,
-                borderColor: "#BFDBFE",
+                borderColor: INPUT_BORDER,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
               <Text
                 style={{
-                  color: "#1E3A8A",
+                  color: WARM_BROWN,
                   fontSize: 16,
                   fontWeight: "900",
                 }}

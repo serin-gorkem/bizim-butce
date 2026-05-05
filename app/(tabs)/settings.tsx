@@ -3,15 +3,28 @@ import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
+
+const SCREEN_BG = "#fcedd9";
+const TEXT_DARK = "#3B2414";
+const TEXT_MUTED = "#7C5A3A";
+const PRIMARY_BLUE = "#2563EB";
+const WARM_BROWN = "#92400E";
+const CARD_BG = "#FFF9F0";
+const SOFT_YELLOW = "#FDE68A";
+const INPUT_BORDER = "#FCD34D";
 
 type Profile = {
   id: string;
@@ -24,11 +37,28 @@ type HouseholdInfo = {
   invite_code: string;
 };
 
+function getRoleLabel(role: string) {
+  if (role === "owner") {
+    return "Kurucu";
+  }
+
+  if (role === "member") {
+    return "Üye";
+  }
+
+  return role || "Bilinmiyor";
+}
+
 export default function SettingsScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [household, setHousehold] = useState<HouseholdInfo | null>(null);
   const [role, setRole] = useState("");
+
+  const [isEditNameModalVisible, setIsEditNameModalVisible] = useState(false);
+  const [editedFullName, setEditedFullName] = useState("");
+
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingName, setIsSavingName] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -96,6 +126,78 @@ export default function SettingsScreen() {
     }, []),
   );
 
+  function openEditNameModal() {
+    setEditedFullName(profile?.full_name ?? "");
+    setIsEditNameModalVisible(true);
+  }
+
+  function closeEditNameModal() {
+    setIsEditNameModalVisible(false);
+    setEditedFullName("");
+  }
+
+  async function handleUpdateFullName() {
+    const cleanedFullName = editedFullName.trim();
+
+    if (!cleanedFullName) {
+      Alert.alert("Eksik bilgi", "İsim soyisim boş olamaz.");
+      return;
+    }
+
+    setIsSavingName(true);
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        Alert.alert("Oturum hatası", "Kullanıcı bilgisi alınamadı.");
+        return;
+      }
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          full_name: cleanedFullName,
+        })
+        .eq("id", user.id);
+
+      if (profileError) {
+        Alert.alert("İsim güncellenemedi", profileError.message);
+        return;
+      }
+
+      const { error: authError } = await supabase.auth.updateUser({
+        data: {
+          full_name: cleanedFullName,
+        },
+      });
+
+      if (authError) {
+        Alert.alert(
+          "Profil güncellendi",
+          "İsim kaydedildi ancak oturum verisi güncellenemedi.",
+        );
+      }
+
+      closeEditNameModal();
+      await loadSettingsData();
+
+      Alert.alert("Güncellendi", "İsim soyisim başarıyla güncellendi.");
+    } catch (error) {
+      Alert.alert(
+        "Beklenmeyen hata",
+        error instanceof Error
+          ? error.message
+          : "İsim güncellenirken hata oluştu.",
+      );
+    } finally {
+      setIsSavingName(false);
+    }
+  }
+
   async function handleLogout() {
     Alert.alert("Çıkış yap", "Hesabından çıkış yapmak istiyor musun?", [
       {
@@ -125,7 +227,7 @@ export default function SettingsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
         <View
           style={{
             flex: 1,
@@ -134,8 +236,8 @@ export default function SettingsScreen() {
             gap: 12,
           }}
         >
-          <ActivityIndicator color="#2563EB" />
-          <Text style={{ color: "#6B7280", fontWeight: "700" }}>
+          <ActivityIndicator color={PRIMARY_BLUE} />
+          <Text style={{ color: TEXT_MUTED, fontWeight: "800" }}>
             Ayarlar yükleniyor...
           </Text>
         </View>
@@ -145,7 +247,7 @@ export default function SettingsScreen() {
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
         <View
           style={{
             flex: 1,
@@ -159,7 +261,7 @@ export default function SettingsScreen() {
               width: "100%",
               padding: 20,
               borderRadius: 24,
-              backgroundColor: "#FFFFFF",
+              backgroundColor: CARD_BG,
               borderWidth: 1,
               borderColor: "#FCA5A5",
             }}
@@ -168,7 +270,7 @@ export default function SettingsScreen() {
               style={{
                 color: "#DC2626",
                 textAlign: "center",
-                fontWeight: "800",
+                fontWeight: "900",
               }}
             >
               {errorMessage}
@@ -180,7 +282,7 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -188,17 +290,18 @@ export default function SettingsScreen() {
           paddingBottom: 48,
         }}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View
           style={{
             padding: 20,
             borderRadius: 28,
-            backgroundColor: "#DBEAFE",
-            borderWidth: 6,
-            borderColor: "#FFFFFF",
+            backgroundColor: CARD_BG,
+            borderWidth: 1,
+            borderColor: SOFT_YELLOW,
             marginBottom: 24,
-            shadowColor: "#1E3A8A",
-            shadowOpacity: 0.12,
+            shadowColor: WARM_BROWN,
+            shadowOpacity: 0.1,
             shadowRadius: 18,
             shadowOffset: { width: 0, height: 10 },
           }}
@@ -215,20 +318,14 @@ export default function SettingsScreen() {
                 width: 66,
                 height: 66,
                 borderRadius: 24,
-                backgroundColor: "#2563EB",
+                backgroundColor: "#FFE8B8",
                 alignItems: "center",
                 justifyContent: "center",
+                borderWidth: 1,
+                borderColor: SOFT_YELLOW,
               }}
             >
-              <Text
-                style={{
-                  color: "#FFFFFF",
-                  fontSize: 28,
-                  fontWeight: "900",
-                }}
-              >
-                ⚙︎
-              </Text>
+              <Text style={{ fontSize: 34 }}>🌴</Text>
             </View>
 
             <View style={{ flex: 1 }}>
@@ -236,7 +333,7 @@ export default function SettingsScreen() {
                 style={{
                   fontSize: 32,
                   fontWeight: "900",
-                  color: "#111827",
+                  color: TEXT_DARK,
                   marginBottom: 4,
                 }}
               >
@@ -247,7 +344,8 @@ export default function SettingsScreen() {
                 style={{
                   fontSize: 15,
                   lineHeight: 21,
-                  color: "#4B5563",
+                  color: TEXT_MUTED,
+                  fontWeight: "600",
                 }}
               >
                 Hesap ve ortak alan bilgilerin.
@@ -259,10 +357,10 @@ export default function SettingsScreen() {
         <View
           style={{
             padding: 20,
-            borderRadius: 24,
-            backgroundColor: "#FFFFFF",
+            borderRadius: 26,
+            backgroundColor: CARD_BG,
             borderWidth: 1,
-            borderColor: "#BFDBFE",
+            borderColor: SOFT_YELLOW,
             marginBottom: 16,
           }}
         >
@@ -272,7 +370,7 @@ export default function SettingsScreen() {
               paddingHorizontal: 12,
               paddingVertical: 7,
               borderRadius: 999,
-              backgroundColor: "#DBEAFE",
+              backgroundColor: "#FFE8B8",
               marginBottom: 12,
             }}
           >
@@ -280,7 +378,7 @@ export default function SettingsScreen() {
               style={{
                 fontSize: 13,
                 fontWeight: "900",
-                color: "#1E40AF",
+                color: WARM_BROWN,
               }}
             >
               Kullanıcı
@@ -291,20 +389,44 @@ export default function SettingsScreen() {
             style={{
               fontSize: 22,
               fontWeight: "900",
-              color: "#111827",
+              color: TEXT_DARK,
+              marginBottom: 14,
             }}
           >
             {profile?.full_name ?? "İsimsiz kullanıcı"}
           </Text>
+
+          <Pressable
+            onPress={openEditNameModal}
+            style={{
+              height: 48,
+              borderRadius: 18,
+              backgroundColor: "#FFFFFF",
+              borderWidth: 1,
+              borderColor: INPUT_BORDER,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text
+              style={{
+                color: WARM_BROWN,
+                fontSize: 15,
+                fontWeight: "900",
+              }}
+            >
+              İsim Soyisim Değiştir
+            </Text>
+          </Pressable>
         </View>
 
         <View
           style={{
             padding: 20,
-            borderRadius: 24,
-            backgroundColor: "#FFFFFF",
+            borderRadius: 26,
+            backgroundColor: CARD_BG,
             borderWidth: 1,
-            borderColor: "#BFDBFE",
+            borderColor: SOFT_YELLOW,
             marginBottom: 16,
           }}
         >
@@ -314,7 +436,7 @@ export default function SettingsScreen() {
               paddingHorizontal: 12,
               paddingVertical: 7,
               borderRadius: 999,
-              backgroundColor: "#EDE9FE",
+              backgroundColor: "#FFE8B8",
               marginBottom: 12,
             }}
           >
@@ -322,7 +444,7 @@ export default function SettingsScreen() {
               style={{
                 fontSize: 13,
                 fontWeight: "900",
-                color: "#5B21B6",
+                color: WARM_BROWN,
               }}
             >
               Ortak Alan
@@ -333,7 +455,7 @@ export default function SettingsScreen() {
             style={{
               fontSize: 22,
               fontWeight: "900",
-              color: "#111827",
+              color: TEXT_DARK,
               marginBottom: 12,
             }}
           >
@@ -344,18 +466,18 @@ export default function SettingsScreen() {
             <View
               style={{
                 padding: 16,
-                borderRadius: 18,
-                backgroundColor: "#F5FBFF",
+                borderRadius: 20,
+                backgroundColor: "#FFFFFF",
                 borderWidth: 1,
-                borderColor: "#DBEAFE",
+                borderColor: INPUT_BORDER,
                 marginBottom: 10,
               }}
             >
               <Text
                 style={{
                   fontSize: 13,
-                  color: "#6B7280",
-                  fontWeight: "700",
+                  color: TEXT_MUTED,
+                  fontWeight: "800",
                   marginBottom: 4,
                 }}
               >
@@ -365,7 +487,7 @@ export default function SettingsScreen() {
               <Text
                 style={{
                   fontSize: 22,
-                  color: "#1E3A8A",
+                  color: WARM_BROWN,
                   fontWeight: "900",
                   letterSpacing: 2,
                 }}
@@ -382,17 +504,17 @@ export default function SettingsScreen() {
                 paddingHorizontal: 12,
                 paddingVertical: 7,
                 borderRadius: 999,
-                backgroundColor: "#DBEAFE",
+                backgroundColor: "#FFE8B8",
               }}
             >
               <Text
                 style={{
                   fontSize: 13,
-                  color: "#1E40AF",
+                  color: WARM_BROWN,
                   fontWeight: "900",
                 }}
               >
-                Rol: {role}
+                Rol: {getRoleLabel(role)}
               </Text>
             </View>
           )}
@@ -402,19 +524,20 @@ export default function SettingsScreen() {
           style={{
             marginTop: 8,
             padding: 18,
-            borderRadius: 24,
-            backgroundColor: "#FFFFFF",
+            borderRadius: 26,
+            backgroundColor: CARD_BG,
             borderWidth: 1,
-            borderColor: "#BFDBFE",
+            borderColor: SOFT_YELLOW,
           }}
         >
           <Text
             style={{
               fontSize: 14,
               lineHeight: 20,
-              color: "#6B7280",
+              color: TEXT_MUTED,
               textAlign: "center",
               marginBottom: 14,
+              fontWeight: "600",
             }}
           >
             Çıkış yaptıktan sonra tekrar giriş ekranına yönlendirilirsin.
@@ -425,7 +548,7 @@ export default function SettingsScreen() {
             disabled={isLoggingOut}
             style={{
               height: 56,
-              borderRadius: 18,
+              borderRadius: 20,
               backgroundColor: isLoggingOut ? "#FCA5A5" : "#DC2626",
               alignItems: "center",
               justifyContent: "center",
@@ -443,6 +566,163 @@ export default function SettingsScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={isEditNameModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (!isSavingName) {
+            closeEditNameModal();
+          }
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(59,36,20,0.45)",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <KeyboardAvoidingView
+            style={{ width: "100%" }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
+          >
+            <View
+              style={{
+                width: "100%",
+                borderRadius: 28,
+                backgroundColor: CARD_BG,
+                padding: 24,
+                borderWidth: 1,
+                borderColor: SOFT_YELLOW,
+              }}
+            >
+              <View
+                style={{
+                  alignSelf: "center",
+                  width: 76,
+                  height: 76,
+                  borderRadius: 28,
+                  backgroundColor: "#FFE8B8",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 18,
+                  borderWidth: 1,
+                  borderColor: SOFT_YELLOW,
+                }}
+              >
+                <Text style={{ fontSize: 34 }}>✏️</Text>
+              </View>
+
+              <Text
+                style={{
+                  fontSize: 26,
+                  fontWeight: "900",
+                  color: TEXT_DARK,
+                  textAlign: "center",
+                  marginBottom: 8,
+                }}
+              >
+                İsim Soyisim
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: TEXT_MUTED,
+                  textAlign: "center",
+                  marginBottom: 20,
+                  fontWeight: "600",
+                }}
+              >
+                Uygulamada görünecek adını buradan değiştirebilirsin.
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: "900",
+                  color: TEXT_DARK,
+                  marginBottom: 8,
+                }}
+              >
+                Ad Soyad
+              </Text>
+
+              <TextInput
+                value={editedFullName}
+                onChangeText={setEditedFullName}
+                placeholder="Ad Soyad"
+                placeholderTextColor="#B08A63"
+                autoCapitalize="words"
+                style={{
+                  height: 54,
+                  borderRadius: 18,
+                  borderWidth: 1,
+                  borderColor: INPUT_BORDER,
+                  backgroundColor: "#FFFFFF",
+                  paddingHorizontal: 16,
+                  fontSize: 16,
+                  fontWeight: "700",
+                  color: TEXT_DARK,
+                  marginBottom: 20,
+                }}
+              />
+
+              <Pressable
+                onPress={handleUpdateFullName}
+                disabled={isSavingName}
+                style={{
+                  height: 54,
+                  borderRadius: 20,
+                  backgroundColor: isSavingName ? "#93C5FD" : PRIMARY_BLUE,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 12,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#FFFFFF",
+                    fontSize: 16,
+                    fontWeight: "900",
+                  }}
+                >
+                  {isSavingName ? "Kaydediliyor..." : "Kaydet"}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={closeEditNameModal}
+                disabled={isSavingName}
+                style={{
+                  height: 54,
+                  borderRadius: 20,
+                  backgroundColor: "#FFFFFF",
+                  borderWidth: 1,
+                  borderColor: INPUT_BORDER,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: WARM_BROWN,
+                    fontSize: 16,
+                    fontWeight: "900",
+                  }}
+                >
+                  Vazgeç
+                </Text>
+              </Pressable>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

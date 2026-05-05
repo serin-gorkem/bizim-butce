@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Modal,
   Pressable,
   SafeAreaView,
@@ -18,6 +19,16 @@ import { supabase } from "../../src/lib/supabase";
 import { formatCurrency, formatDate } from "../../src/utils/formatters";
 import { parsePositiveNumber } from "../../src/utils/parsers";
 import { firstOrNull } from "../../src/utils/relations";
+
+const homeImage = require("../../assets/images/Home.png");
+
+const SCREEN_BG = "#fcedd9";
+const TEXT_DARK = "#3B2414";
+const TEXT_MUTED = "#7C5A3A";
+const PRIMARY_BLUE = "#2563EB";
+const WARM_BROWN = "#92400E";
+const CARD_BG = "#FFF9F0";
+const SOFT_YELLOW = "#FDE68A";
 
 type ExpenseRaw = {
   id: string;
@@ -86,6 +97,7 @@ type HomeSummary = {
   monthTotal: number;
   todayTotal: number;
   userTotals: UserTotal[];
+  memberCount: number;
 };
 
 function getMonthDateRange() {
@@ -128,7 +140,10 @@ function normalizeExpense(raw: ExpenseRaw): Expense {
   };
 }
 
-function calculateSummary(monthExpenses: Expense[]): HomeSummary {
+function calculateSummary(
+  monthExpenses: Expense[],
+  memberCount: number,
+): HomeSummary {
   const { start: todayStart, end: todayEnd } = getTodayDateRange();
 
   const monthTotal = monthExpenses.reduce(
@@ -139,7 +154,6 @@ function calculateSummary(monthExpenses: Expense[]): HomeSummary {
   const todayTotal = monthExpenses
     .filter((expense) => {
       const spentAt = new Date(expense.spent_at).toISOString();
-
       return spentAt >= todayStart && spentAt < todayEnd;
     })
     .reduce((total, expense) => total + expense.amount, 0);
@@ -165,6 +179,7 @@ function calculateSummary(monthExpenses: Expense[]): HomeSummary {
     monthTotal,
     todayTotal,
     userTotals: Array.from(totalsByUser.values()),
+    memberCount,
   };
 }
 
@@ -182,6 +197,7 @@ export default function HomeScreen() {
     monthTotal: 0,
     todayTotal: 0,
     userTotals: [],
+    memberCount: 0,
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -218,6 +234,16 @@ export default function HomeScreen() {
       }
 
       setCategories(categoriesData ?? []);
+
+      const { count: memberCount, error: memberCountError } = await supabase
+        .from("household_members")
+        .select("id", { count: "exact", head: true })
+        .eq("household_id", membership.household_id);
+
+      if (memberCountError) {
+        setErrorMessage(memberCountError.message);
+        return;
+      }
 
       const { start: monthStart, end: monthEnd } = getMonthDateRange();
 
@@ -257,7 +283,7 @@ export default function HomeScreen() {
         normalizeExpense,
       );
 
-      setSummary(calculateSummary(normalizedMonthExpenses));
+      setSummary(calculateSummary(normalizedMonthExpenses, memberCount ?? 0));
 
       const { data: recentData, error: recentError } = await supabase
         .from("expenses")
@@ -411,7 +437,7 @@ export default function HomeScreen() {
           width: 88,
           minHeight: 74,
           backgroundColor: "#DC2626",
-          borderRadius: 18,
+          borderRadius: 20,
           alignItems: "center",
           justifyContent: "center",
           marginBottom: 12,
@@ -432,7 +458,7 @@ export default function HomeScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
         <View
           style={{
             flex: 1,
@@ -441,8 +467,8 @@ export default function HomeScreen() {
             gap: 12,
           }}
         >
-          <ActivityIndicator color="#2563EB" />
-          <Text style={{ color: "#6B7280", fontWeight: "700" }}>
+          <ActivityIndicator color={PRIMARY_BLUE} />
+          <Text style={{ color: TEXT_MUTED, fontWeight: "800" }}>
             Ana sayfa yükleniyor...
           </Text>
         </View>
@@ -452,7 +478,7 @@ export default function HomeScreen() {
 
   if (errorMessage) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
         <View
           style={{
             flex: 1,
@@ -466,7 +492,7 @@ export default function HomeScreen() {
               width: "100%",
               padding: 20,
               borderRadius: 24,
-              backgroundColor: "#FFFFFF",
+              backgroundColor: CARD_BG,
               borderWidth: 1,
               borderColor: "#FCA5A5",
             }}
@@ -475,7 +501,7 @@ export default function HomeScreen() {
               style={{
                 color: "#DC2626",
                 textAlign: "center",
-                fontWeight: "800",
+                fontWeight: "900",
               }}
             >
               {errorMessage}
@@ -487,7 +513,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
       <FlatList
         data={recentExpenses}
         keyExtractor={(item) => item.id}
@@ -499,78 +525,61 @@ export default function HomeScreen() {
           <View>
             <View
               style={{
-                padding: 20,
-                borderRadius: 28,
-                backgroundColor: "#DBEAFE",
-                borderWidth: 6,
-                borderColor: "#FFFFFF",
-                marginBottom: 18,
-                shadowColor: "#1E3A8A",
-                shadowOpacity: 0.12,
-                shadowRadius: 18,
-                shadowOffset: { width: 0, height: 10 },
+                alignItems: "center",
+                justifyContent: "center",
+                height: 185,
+                marginTop: -8,
+                marginBottom: 2,
+                overflow: "visible",
               }}
             >
-              <View
+              <Image
+                source={homeImage}
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 14,
+                  width: 330,
+                  height: 270,
+                }}
+                resizeMode="contain"
+              />
+            </View>
+
+            <View
+              style={{
+                alignItems: "center",
+                marginBottom: 18,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 34,
+                  fontWeight: "900",
+                  color: TEXT_DARK,
+                  textAlign: "center",
+                  marginBottom: 6,
                 }}
               >
-                <View
-                  style={{
-                    width: 66,
-                    height: 66,
-                    borderRadius: 24,
-                    backgroundColor: "#2563EB",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#FFFFFF",
-                      fontSize: 25,
-                      fontWeight: "900",
-                    }}
-                  >
-                    BB
-                  </Text>
-                </View>
+                BizimBütçe
+              </Text>
 
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: 32,
-                      fontWeight: "900",
-                      color: "#111827",
-                      marginBottom: 4,
-                    }}
-                  >
-                    BizimBütçe
-                  </Text>
-
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      lineHeight: 21,
-                      color: "#4B5563",
-                    }}
-                  >
-                    {householdName} ortak harcama alanı.
-                  </Text>
-                </View>
-              </View>
+              <Text
+                style={{
+                  fontSize: 15,
+                  lineHeight: 21,
+                  color: TEXT_MUTED,
+                  textAlign: "center",
+                }}
+              >
+                {householdName} ortak harcama alanı.
+              </Text>
             </View>
 
             <View
               style={{
                 padding: 22,
                 borderRadius: 28,
-                backgroundColor: "#2563EB",
+                backgroundColor: PRIMARY_BLUE,
                 marginBottom: 16,
-                shadowColor: "#2563EB",
+                shadowColor: PRIMARY_BLUE,
                 shadowOpacity: 0.22,
                 shadowRadius: 16,
                 shadowOffset: { width: 0, height: 10 },
@@ -579,7 +588,7 @@ export default function HomeScreen() {
               <Text
                 style={{
                   fontSize: 14,
-                  fontWeight: "800",
+                  fontWeight: "900",
                   color: "#DBEAFE",
                   marginBottom: 8,
                 }}
@@ -603,6 +612,7 @@ export default function HomeScreen() {
                   fontSize: 14,
                   color: "#DBEAFE",
                   lineHeight: 20,
+                  fontWeight: "600",
                 }}
               >
                 Bu ay ortak alana girilen toplam harcama.
@@ -620,17 +630,17 @@ export default function HomeScreen() {
                 style={{
                   flex: 1,
                   padding: 16,
-                  borderRadius: 20,
-                  backgroundColor: "#FFFFFF",
+                  borderRadius: 22,
+                  backgroundColor: CARD_BG,
                   borderWidth: 1,
-                  borderColor: "#BFDBFE",
+                  borderColor: SOFT_YELLOW,
                 }}
               >
                 <Text
                   style={{
                     fontSize: 13,
-                    color: "#6B7280",
-                    fontWeight: "800",
+                    color: TEXT_MUTED,
+                    fontWeight: "900",
                     marginBottom: 6,
                   }}
                 >
@@ -641,7 +651,7 @@ export default function HomeScreen() {
                   style={{
                     fontSize: 20,
                     fontWeight: "900",
-                    color: "#1E3A8A",
+                    color: WARM_BROWN,
                   }}
                 >
                   {formatCurrency(summary.todayTotal)}
@@ -652,17 +662,17 @@ export default function HomeScreen() {
                 style={{
                   flex: 1,
                   padding: 16,
-                  borderRadius: 20,
-                  backgroundColor: "#FFFFFF",
+                  borderRadius: 22,
+                  backgroundColor: CARD_BG,
                   borderWidth: 1,
-                  borderColor: "#BFDBFE",
+                  borderColor: SOFT_YELLOW,
                 }}
               >
                 <Text
                   style={{
                     fontSize: 13,
-                    color: "#6B7280",
-                    fontWeight: "800",
+                    color: TEXT_MUTED,
+                    fontWeight: "900",
                     marginBottom: 6,
                   }}
                 >
@@ -673,10 +683,10 @@ export default function HomeScreen() {
                   style={{
                     fontSize: 20,
                     fontWeight: "900",
-                    color: "#1E3A8A",
+                    color: WARM_BROWN,
                   }}
                 >
-                  {summary.userTotals.length}
+                  {summary.memberCount}
                 </Text>
               </View>
             </View>
@@ -685,7 +695,7 @@ export default function HomeScreen() {
               style={{
                 fontSize: 20,
                 fontWeight: "900",
-                color: "#111827",
+                color: TEXT_DARK,
                 marginBottom: 12,
               }}
             >
@@ -696,14 +706,14 @@ export default function HomeScreen() {
               style={{
                 marginBottom: 24,
                 padding: 18,
-                borderRadius: 24,
-                backgroundColor: "#FFFFFF",
+                borderRadius: 26,
+                backgroundColor: CARD_BG,
                 borderWidth: 1,
-                borderColor: "#BFDBFE",
+                borderColor: SOFT_YELLOW,
               }}
             >
               {summary.userTotals.length === 0 ? (
-                <Text style={{ color: "#6B7280", fontWeight: "700" }}>
+                <Text style={{ color: TEXT_MUTED, fontWeight: "800" }}>
                   Henüz harcama yok.
                 </Text>
               ) : (
@@ -712,10 +722,10 @@ export default function HomeScreen() {
                     key={userTotal.userId}
                     style={{
                       padding: 14,
-                      borderRadius: 18,
-                      backgroundColor: "#F5FBFF",
+                      borderRadius: 20,
+                      backgroundColor: "#FFFFFF",
                       borderWidth: 1,
-                      borderColor: "#DBEAFE",
+                      borderColor: "#FCD34D",
                       marginBottom: 10,
                       flexDirection: "row",
                       justifyContent: "space-between",
@@ -725,8 +735,8 @@ export default function HomeScreen() {
                     <Text
                       style={{
                         fontSize: 15,
-                        fontWeight: "800",
-                        color: "#111827",
+                        fontWeight: "900",
+                        color: TEXT_DARK,
                       }}
                     >
                       {userTotal.fullName}
@@ -736,7 +746,7 @@ export default function HomeScreen() {
                       style={{
                         fontSize: 15,
                         fontWeight: "900",
-                        color: "#5B21B6",
+                        color: WARM_BROWN,
                       }}
                     >
                       {formatCurrency(userTotal.total)}
@@ -750,7 +760,7 @@ export default function HomeScreen() {
               style={{
                 fontSize: 20,
                 fontWeight: "900",
-                color: "#111827",
+                color: TEXT_DARK,
                 marginBottom: 12,
               }}
             >
@@ -762,17 +772,17 @@ export default function HomeScreen() {
           <View
             style={{
               padding: 24,
-              borderRadius: 24,
-              backgroundColor: "#FFFFFF",
+              borderRadius: 26,
+              backgroundColor: CARD_BG,
               borderWidth: 1,
-              borderColor: "#BFDBFE",
+              borderColor: SOFT_YELLOW,
             }}
           >
             <Text
               style={{
-                color: "#6B7280",
+                color: TEXT_MUTED,
                 textAlign: "center",
-                fontWeight: "700",
+                fontWeight: "800",
               }}
             >
               Henüz harcama eklenmedi.
@@ -785,10 +795,10 @@ export default function HomeScreen() {
               onPress={() => openEditModal(item)}
               style={{
                 padding: 16,
-                borderRadius: 20,
-                backgroundColor: "#FFFFFF",
+                borderRadius: 22,
+                backgroundColor: CARD_BG,
                 borderWidth: 1,
-                borderColor: "#BFDBFE",
+                borderColor: SOFT_YELLOW,
                 marginBottom: 12,
               }}
             >
@@ -804,7 +814,7 @@ export default function HomeScreen() {
                     style={{
                       fontSize: 16,
                       fontWeight: "900",
-                      color: "#111827",
+                      color: TEXT_DARK,
                     }}
                   >
                     {item.categories?.name ?? "Kategori yok"}
@@ -815,8 +825,8 @@ export default function HomeScreen() {
                       style={{
                         marginTop: 4,
                         fontSize: 14,
-                        color: "#111827",
-                        fontWeight: "600",
+                        color: TEXT_DARK,
+                        fontWeight: "700",
                       }}
                     >
                       {item.description}
@@ -830,8 +840,8 @@ export default function HomeScreen() {
                         style={{
                           marginTop: 4,
                           fontSize: 13,
-                          color: "#5B21B6",
-                          fontWeight: "700",
+                          color: "#BE185D",
+                          fontWeight: "800",
                         }}
                       >
                         {item.quantity} adet × ₺
@@ -843,7 +853,7 @@ export default function HomeScreen() {
                     style={{
                       marginTop: 4,
                       fontSize: 14,
-                      color: "#6B7280",
+                      color: TEXT_MUTED,
                     }}
                   >
                     {item.profiles?.full_name ?? "Bilinmeyen kullanıcı"} ·{" "}
@@ -855,7 +865,7 @@ export default function HomeScreen() {
                   style={{
                     fontSize: 16,
                     fontWeight: "900",
-                    color: "#1E3A8A",
+                    color: WARM_BROWN,
                   }}
                 >
                   {formatCurrency(item.amount)}
@@ -879,7 +889,7 @@ export default function HomeScreen() {
         <View
           style={{
             flex: 1,
-            backgroundColor: "rgba(30,58,138,0.45)",
+            backgroundColor: "rgba(59,36,20,0.45)",
             alignItems: "center",
             justifyContent: "center",
             padding: 24,
@@ -889,17 +899,17 @@ export default function HomeScreen() {
             style={{
               width: "100%",
               borderRadius: 28,
-              backgroundColor: "#FFFFFF",
+              backgroundColor: CARD_BG,
               padding: 24,
               borderWidth: 1,
-              borderColor: "#BFDBFE",
+              borderColor: SOFT_YELLOW,
             }}
           >
             <Text
               style={{
                 fontSize: 26,
                 fontWeight: "900",
-                color: "#111827",
+                color: TEXT_DARK,
                 textAlign: "center",
                 marginBottom: 8,
               }}
@@ -910,7 +920,7 @@ export default function HomeScreen() {
             <Text
               style={{
                 fontSize: 15,
-                color: "#6B7280",
+                color: TEXT_MUTED,
                 textAlign: "center",
                 marginBottom: 20,
               }}
@@ -921,8 +931,8 @@ export default function HomeScreen() {
             <Text
               style={{
                 fontSize: 14,
-                fontWeight: "800",
-                color: "#111827",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 8,
               }}
             >
@@ -933,16 +943,18 @@ export default function HomeScreen() {
               value={editAmount}
               onChangeText={setEditAmount}
               placeholder="Örn: 350"
+              placeholderTextColor="#B08A63"
               keyboardType="decimal-pad"
               style={{
                 height: 54,
                 borderRadius: 18,
                 borderWidth: 1,
-                borderColor: "#D1D5DB",
-                backgroundColor: "#F9FAFB",
+                borderColor: "#FCD34D",
+                backgroundColor: "#FFFFFF",
                 paddingHorizontal: 16,
                 fontSize: 20,
-                fontWeight: "800",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 16,
               }}
             />
@@ -950,8 +962,8 @@ export default function HomeScreen() {
             <Text
               style={{
                 fontSize: 14,
-                fontWeight: "800",
-                color: "#111827",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 8,
               }}
             >
@@ -962,15 +974,17 @@ export default function HomeScreen() {
               value={editDescription}
               onChangeText={setEditDescription}
               placeholder="Örn: Migros alışverişi"
+              placeholderTextColor="#B08A63"
               style={{
                 height: 54,
                 borderRadius: 18,
                 borderWidth: 1,
-                borderColor: "#D1D5DB",
-                backgroundColor: "#F9FAFB",
+                borderColor: "#FCD34D",
+                backgroundColor: "#FFFFFF",
                 paddingHorizontal: 16,
                 fontSize: 16,
-                fontWeight: "500",
+                fontWeight: "600",
+                color: TEXT_DARK,
                 marginBottom: 16,
               }}
             />
@@ -978,8 +992,8 @@ export default function HomeScreen() {
             <Text
               style={{
                 fontSize: 14,
-                fontWeight: "800",
-                color: "#111827",
+                fontWeight: "900",
+                color: TEXT_DARK,
                 marginBottom: 8,
               }}
             >
@@ -1005,10 +1019,10 @@ export default function HomeScreen() {
                     style={{
                       paddingHorizontal: 12,
                       height: 40,
-                      borderRadius: 12,
-                      backgroundColor: isSelected ? "#2563EB" : "#F5FBFF",
+                      borderRadius: 14,
+                      backgroundColor: isSelected ? PRIMARY_BLUE : "#FFFFFF",
                       borderWidth: 1,
-                      borderColor: isSelected ? "#2563EB" : "#DBEAFE",
+                      borderColor: isSelected ? PRIMARY_BLUE : "#FCD34D",
                       alignItems: "center",
                       justifyContent: "center",
                     }}
@@ -1016,8 +1030,8 @@ export default function HomeScreen() {
                     <Text
                       style={{
                         fontSize: 13,
-                        fontWeight: "800",
-                        color: isSelected ? "#FFFFFF" : "#1E3A8A",
+                        fontWeight: "900",
+                        color: isSelected ? "#FFFFFF" : WARM_BROWN,
                       }}
                     >
                       {category.name}
@@ -1032,8 +1046,8 @@ export default function HomeScreen() {
               disabled={isSaving}
               style={{
                 height: 54,
-                borderRadius: 18,
-                backgroundColor: isSaving ? "#93C5FD" : "#2563EB",
+                borderRadius: 20,
+                backgroundColor: isSaving ? "#93C5FD" : PRIMARY_BLUE,
                 alignItems: "center",
                 justifyContent: "center",
                 marginBottom: 12,
@@ -1055,17 +1069,17 @@ export default function HomeScreen() {
               disabled={isSaving}
               style={{
                 height: 54,
-                borderRadius: 18,
+                borderRadius: 20,
                 backgroundColor: "#FFFFFF",
                 borderWidth: 1,
-                borderColor: "#BFDBFE",
+                borderColor: "#FCD34D",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
               <Text
                 style={{
-                  color: "#1E3A8A",
+                  color: WARM_BROWN,
                   fontSize: 16,
                   fontWeight: "900",
                 }}

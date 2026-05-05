@@ -3,199 +3,72 @@ import { Image, Pressable, SafeAreaView, Text, View } from "react-native";
 
 const mascotImage = require("../../assets/images/welcome-mascot.png");
 
+const SCREEN_BG = "#fcedd9";
+const TEXT_DARK = "#3B2414";
+const TEXT_MUTED = "#7C5A3A";
+const PRIMARY_BLUE = "#2563EB";
+const WARM_BROWN = "#92400E";
+
 export default function WelcomeScreen() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5FBFF" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
       <View
         style={{
           flex: 1,
           paddingHorizontal: 24,
-          paddingTop: 28,
-          paddingBottom: 24,
-          justifyContent: "space-between",
+          paddingTop: 22,
+          paddingBottom: 22,
+          justifyContent: "center",
         }}
       >
-        <View
-          style={{
-            alignSelf: "center",
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            borderRadius: 999,
-            backgroundColor: "#EDE9FE",
-            borderWidth: 1,
-            borderColor: "#DDD6FE",
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "800",
-              color: "#5B21B6",
-            }}
-          >
-            Sadece ikiniz için ortak bütçe alanı
-          </Text>
-        </View>
-
         <View style={{ alignItems: "center" }}>
           <View
             style={{
-              width: 230,
-              height: 230,
-              borderRadius: 48,
-              backgroundColor: "#DBEAFE",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 30,
-              borderWidth: 8,
-              borderColor: "#FFFFFF",
-              shadowColor: "#1E3A8A",
-              shadowOpacity: 0.16,
-              shadowRadius: 22,
-              shadowOffset: { width: 0, height: 12 },
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 999,
+              backgroundColor: "#FFE8B8",
+              marginBottom: 12,
             }}
           >
-            <View
+            <Text
               style={{
-                position: "absolute",
-                width: 170,
-                height: 170,
-                borderRadius: 85,
-                backgroundColor: "#BFDBFE",
-              }}
-            />
-
-            <View
-              style={{
-                position: "absolute",
-                top: 24,
-                left: 26,
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                backgroundColor: "#60A5FA",
-                transform: [{ rotate: "-18deg" }],
-              }}
-            />
-
-            <View
-              style={{
-                position: "absolute",
-                top: 24,
-                right: 26,
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                backgroundColor: "#60A5FA",
-                transform: [{ rotate: "18deg" }],
-              }}
-            />
-
-            <View
-              style={{
-                width: 132,
-                height: 132,
-                borderRadius: 66,
-                backgroundColor: "#2563EB",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
+                fontSize: 13,
+                fontWeight: "900",
+                color: WARM_BROWN,
               }}
             >
-              {mascotImage ? (
-                <Image
-                  source={mascotImage}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={{ alignItems: "center" }}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      gap: 18,
-                      marginBottom: 14,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 18,
-                        height: 24,
-                        borderRadius: 12,
-                        backgroundColor: "#FFFFFF",
-                      }}
-                    />
-                    <View
-                      style={{
-                        width: 18,
-                        height: 24,
-                        borderRadius: 12,
-                        backgroundColor: "#FFFFFF",
-                      }}
-                    />
-                  </View>
+              Sadece ikiniz için küçük bir bütçe adası
+            </Text>
+          </View>
 
-                  <View
-                    style={{
-                      width: 46,
-                      height: 18,
-                      borderBottomLeftRadius: 24,
-                      borderBottomRightRadius: 24,
-                      backgroundColor: "#93C5FD",
-                    }}
-                  />
-
-                  <Text
-                    style={{
-                      marginTop: 12,
-                      color: "#FFFFFF",
-                      fontSize: 15,
-                      fontWeight: "900",
-                    }}
-                  >
-                    BB
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            <View
+          <View
+            style={{
+              width: 330,
+              height: 286,
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 14,
+              backgroundColor: SCREEN_BG,
+            }}
+          >
+            <Image
+              source={mascotImage}
               style={{
-                position: "absolute",
-                right: 28,
-                bottom: 28,
-                width: 54,
-                height: 54,
-                borderRadius: 18,
-                backgroundColor: "#7C3AED",
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 4,
-                borderColor: "#FFFFFF",
+                width: 330,
+                height: 286,
               }}
-            >
-              <Text
-                style={{
-                  color: "#FFFFFF",
-                  fontSize: 24,
-                  fontWeight: "900",
-                }}
-              >
-                ₺
-              </Text>
-            </View>
+              resizeMode="contain"
+            />
           </View>
 
           <Text
             style={{
               fontSize: 40,
               fontWeight: "900",
-              color: "#111827",
+              color: TEXT_DARK,
               textAlign: "center",
-              marginBottom: 10,
+              marginBottom: 8,
             }}
           >
             BizimBütçe
@@ -203,11 +76,12 @@ export default function WelcomeScreen() {
 
           <Text
             style={{
-              fontSize: 17,
-              lineHeight: 25,
-              color: "#6B7280",
+              fontSize: 16,
+              lineHeight: 23,
+              color: TEXT_MUTED,
               textAlign: "center",
               maxWidth: 330,
+              marginBottom: 16,
             }}
           >
             Harcamalarınızı birlikte görün, küçük giderleri kaçırmayın ve ay
@@ -218,13 +92,13 @@ export default function WelcomeScreen() {
             style={{
               flexDirection: "row",
               gap: 10,
-              marginTop: 24,
+              marginBottom: 20,
             }}
           >
             <View
               style={{
                 paddingHorizontal: 14,
-                paddingVertical: 9,
+                paddingVertical: 8,
                 borderRadius: 999,
                 backgroundColor: "#DBEAFE",
               }}
@@ -232,7 +106,7 @@ export default function WelcomeScreen() {
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: "800",
+                  fontWeight: "900",
                   color: "#1E40AF",
                 }}
               >
@@ -243,80 +117,78 @@ export default function WelcomeScreen() {
             <View
               style={{
                 paddingHorizontal: 14,
-                paddingVertical: 9,
+                paddingVertical: 8,
                 borderRadius: 999,
-                backgroundColor: "#EDE9FE",
+                backgroundColor: "#FCE7F3",
               }}
             >
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: "800",
-                  color: "#5B21B6",
+                  fontWeight: "900",
+                  color: "#BE185D",
                 }}
               >
                 Az uğraş
               </Text>
             </View>
           </View>
-        </View>
 
-        <View>
-          <Pressable
-            onPress={() => router.push("/(auth)/login")}
-            style={{
-              height: 58,
-              borderRadius: 20,
-              backgroundColor: "#2563EB",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: 12,
-              shadowColor: "#2563EB",
-              shadowOpacity: 0.24,
-              shadowRadius: 14,
-              shadowOffset: { width: 0, height: 8 },
-            }}
-          >
-            <Text
+          <View style={{ width: "100%" }}>
+            <Pressable
+              onPress={() => router.push("/(auth)/login")}
               style={{
-                color: "#FFFFFF",
-                fontSize: 16,
-                fontWeight: "900",
+                height: 58,
+                borderRadius: 22,
+                backgroundColor: PRIMARY_BLUE,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 12,
+                shadowColor: PRIMARY_BLUE,
+                shadowOpacity: 0.22,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 8 },
               }}
             >
-              Giriş Yap
-            </Text>
-          </Pressable>
+              <Text
+                style={{
+                  color: "#FFFFFF",
+                  fontSize: 16,
+                  fontWeight: "900",
+                }}
+              >
+                Giriş Yap
+              </Text>
+            </Pressable>
 
-          <Pressable
-            onPress={() => router.push("/(auth)/register")}
-            style={{
-              height: 58,
-              borderRadius: 20,
-              backgroundColor: "#FFFFFF",
-              borderWidth: 1,
-              borderColor: "#BFDBFE",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text
+            <Pressable
+              onPress={() => router.push("/(auth)/register")}
               style={{
-                color: "#1E3A8A",
-                fontSize: 16,
-                fontWeight: "900",
+                height: 58,
+                borderRadius: 22,
+                backgroundColor: "#FFF9F0",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              Hesap Oluştur
-            </Text>
-          </Pressable>
+              <Text
+                style={{
+                  color: WARM_BROWN,
+                  fontSize: 16,
+                  fontWeight: "900",
+                }}
+              >
+                Hesap Oluştur
+              </Text>
+            </Pressable>
+          </View>
 
           <Text
             style={{
-              marginTop: 18,
+              marginTop: 14,
               fontSize: 13,
               lineHeight: 19,
-              color: "#6B7280",
+              color: "#9A6B3D",
               textAlign: "center",
             }}
           >
