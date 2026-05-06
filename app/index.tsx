@@ -1,73 +1,50 @@
-import { Redirect } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, SafeAreaView, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 
+import { guardActiveHousehold } from "@/lib/household";
+import { AppScreen } from "../components/AppScreen";
 import { supabase } from "../src/lib/supabase";
 
-type AppState = "loading" | "unauthenticated" | "needs-onboarding" | "ready";
+const SCREEN_BG = "#fcedd9";
+const PRIMARY_BLUE = "#2563EB";
 
 export default function IndexScreen() {
-  const [appState, setAppState] = useState<AppState>("loading");
-
   useEffect(() => {
-    async function checkAppState() {
+    async function bootstrap() {
       const {
         data: { session },
-        error: sessionError,
       } = await supabase.auth.getSession();
 
-      if (sessionError || !session?.user) {
-        setAppState("unauthenticated");
+      if (!session) {
+        router.replace("/(auth)/welcome");
         return;
       }
 
-      const { data: membership, error: membershipError } = await supabase
-        .from("household_members")
-        .select("id, household_id")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+      const membership = await guardActiveHousehold();
 
-      if (membershipError) {
-        setAppState("needs-onboarding");
+      if (membership) {
+        router.replace("/(tabs)/home");
         return;
       }
 
-      if (!membership) {
-        setAppState("needs-onboarding");
-        return;
-      }
-
-      setAppState("ready");
+      router.replace("/(onboarding)");
     }
 
-    checkAppState();
+    bootstrap();
   }, []);
 
-  if (appState === "loading") {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F7F7F7" }}>
-        <View
-          style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-          }}
-        >
-          <ActivityIndicator />
-          <Text style={{ color: "#6B7280" }}>Oturum kontrol ediliyor...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (appState === "unauthenticated") {
-    return <Redirect href="/(auth)/welcome" />;
-  }
-
-  if (appState === "needs-onboarding") {
-    return <Redirect href="/(onboarding)" />;
-  }
-
-  return <Redirect href="/(tabs)/home" />;
+  return (
+    <AppScreen backgroundColor={SCREEN_BG}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <ActivityIndicator color={PRIMARY_BLUE} />
+      </View>
+    </AppScreen>
+  );
 }

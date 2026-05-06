@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { AppScreen } from "../../components/AppScreen";
 
-import { getCurrentUserHousehold } from "../../src/lib/household";
+import { guardActiveHousehold } from "@/lib/household";
 import { supabase } from "../../src/lib/supabase";
 import { showAlert } from "../../src/utils/appAlert";
 import { formatCurrency } from "../../src/utils/formatters";
@@ -128,7 +128,7 @@ export default function TemplatesScreen() {
     setErrorMessage("");
 
     try {
-      const membership = await getCurrentUserHousehold();
+      const membership = await guardActiveHousehold();
 
       if (!membership) {
         setErrorMessage("Ortak alan bulunamadı.");
@@ -247,7 +247,7 @@ export default function TemplatesScreen() {
     setIsSaving(true);
 
     try {
-      const membership = await getCurrentUserHousehold();
+      const membership = await guardActiveHousehold();
 
       if (!membership) {
         showAlert(

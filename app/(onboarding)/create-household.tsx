@@ -6,13 +6,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
   View,
 } from "react-native";
 
+import { AppScreen } from "../../components/AppScreen";
 import { DEFAULT_CATEGORIES } from "../../src/constants/categories";
 import { supabase } from "../../src/lib/supabase";
 import { generateInviteCode } from "../../src/utils/inviteCode";
@@ -110,7 +110,7 @@ export default function CreateHouseholdScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: SCREEN_BG }}>
+    <AppScreen backgroundColor={SCREEN_BG}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -280,6 +280,6 @@ export default function CreateHouseholdScreen() {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }

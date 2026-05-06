@@ -16,38 +16,24 @@ if (!supabasePublishableKey) {
 
 const webStorage = {
   getItem: (key: string) => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-
+    if (typeof window === "undefined") return null;
     return window.localStorage.getItem(key);
   },
-
   setItem: (key: string, value: string) => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
+    if (typeof window === "undefined") return;
     window.localStorage.setItem(key, value);
   },
-
   removeItem: (key: string) => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
+    if (typeof window === "undefined") return;
     window.localStorage.removeItem(key);
   },
 };
 
-const storage = Platform.OS === "web" ? webStorage : AsyncStorage;
-
 export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   auth: {
-    storage,
+    storage: Platform.OS === "web" ? webStorage : AsyncStorage,
     autoRefreshToken: true,
-    persistSession:
-      Platform.OS === "web" ? typeof window !== "undefined" : true,
-    detectSessionInUrl: Platform.OS === "web",
+    persistSession: true,
+    detectSessionInUrl: false,
   },
 });

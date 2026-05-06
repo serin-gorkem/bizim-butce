@@ -11,9 +11,9 @@ import {
   View,
 } from "react-native";
 
+import { guardActiveHousehold } from "@/lib/household";
 import { AppScreen } from "../../components/AppScreen";
 import { ExpenseSwipeActions } from "../../components/ExpenseSwipeActions";
-import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
 import { showAlert } from "../../src/utils/appAlert";
 import { formatCurrency, formatDate } from "../../src/utils/formatters";
@@ -210,7 +210,7 @@ export default function HomeScreen() {
     setErrorMessage("");
 
     try {
-      const membership = await getCurrentUserHousehold();
+      const membership = await guardActiveHousehold();
 
       if (!membership) {
         setErrorMessage("Ortak alan bulunamadı.");

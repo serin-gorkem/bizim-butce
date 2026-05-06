@@ -10,8 +10,8 @@ import {
   View,
 } from "react-native";
 
+import { guardActiveHousehold } from "@/lib/household";
 import { AppScreen } from "../../components/AppScreen";
-import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
 import { showAlert } from "../../src/utils/appAlert";
 import { parsePositiveNumber } from "../../src/utils/parsers";
@@ -75,7 +75,7 @@ export default function AddExpenseScreen() {
     setErrorMessage("");
 
     try {
-      const membership = await getCurrentUserHousehold();
+      const membership = await guardActiveHousehold();
 
       if (!membership) {
         setErrorMessage("Ortak alan bulunamadı.");
@@ -153,7 +153,7 @@ export default function AddExpenseScreen() {
     setIsSaving(true);
 
     try {
-      const membership = await getCurrentUserHousehold();
+      const membership = await guardActiveHousehold();
 
       if (!membership) {
         showAlert(
@@ -249,7 +249,7 @@ export default function AddExpenseScreen() {
     setIsSaving(true);
 
     try {
-      const membership = await getCurrentUserHousehold();
+      const membership = await guardActiveHousehold();
 
       if (!membership) {
         showAlert(

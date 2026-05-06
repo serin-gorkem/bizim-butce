@@ -14,8 +14,8 @@ import {
   View,
 } from "react-native";
 
+import { guardActiveHousehold } from "@/lib/household";
 import { AppScreen } from "../../components/AppScreen";
-import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
 import { showAlert } from "../../src/utils/appAlert";
 
@@ -121,7 +121,7 @@ export default function SettingsScreen() {
 
       setProfile(profileData);
 
-      const membership = await getCurrentUserHousehold();
+      const membership = await guardActiveHousehold();
 
       if (!membership) {
         setHousehold(null);
@@ -310,20 +310,22 @@ export default function SettingsScreen() {
           onPress: async () => {
             setIsHouseholdActionLoading(true);
 
-            const { error } = await supabase
-              .from("household_members")
-              .delete()
-              .eq("household_id", household.id)
-              .eq("user_id", currentUserId);
+            try {
+              const { error } = await supabase.rpc("leave_household", {
+                target_household_id: household.id,
+              });
 
-            setIsHouseholdActionLoading(false);
+              if (error) {
+                showAlert("Çıkılamadı", error.message);
+                return;
+              }
 
-            if (error) {
-              showAlert("Çıkılamadı", error.message);
-              return;
+              await supabase.auth.refreshSession();
+
+              router.replace("/(onboarding)");
+            } finally {
+              setIsHouseholdActionLoading(false);
             }
-
-            router.replace("/(onboarding)");
           },
         },
       ],
@@ -335,7 +337,7 @@ export default function SettingsScreen() {
 
     showAlert(
       "Ortak alanı sil",
-      "Bu işlem tüm harcamaları, kategorileri, hazır harcamaları ve üyelikleri siler. Emin misin?",
+      "Bu işlem tüm harcamaları, kategorileri, hazır harcamaları ve üyelikleri kalıcı olarak siler. Emin misin?",
       [
         { text: "Vazgeç", style: "cancel" },
         {
@@ -345,36 +347,26 @@ export default function SettingsScreen() {
             setIsHouseholdActionLoading(true);
 
             try {
-              const deleteSteps = [
-                supabase
-                  .from("expenses")
-                  .delete()
-                  .eq("household_id", household.id),
-                supabase
-                  .from("expense_templates")
-                  .delete()
-                  .eq("household_id", household.id),
-                supabase
-                  .from("categories")
-                  .delete()
-                  .eq("household_id", household.id),
-                supabase
-                  .from("household_members")
-                  .delete()
-                  .eq("household_id", household.id),
-                supabase.from("households").delete().eq("id", household.id),
-              ];
+              const { error } = await supabase.rpc(
+                "delete_household_as_owner",
+                {
+                  target_household_id: household.id,
+                },
+              );
 
-              for (const step of deleteSteps) {
-                const { error } = await step;
-
-                if (error) {
-                  showAlert("Silinemedi", error.message);
-                  return;
-                }
+              if (error) {
+                showAlert("Silinemedi", error.message);
+                return;
               }
 
               router.replace("/(onboarding)");
+            } catch (error) {
+              showAlert(
+                "Beklenmeyen hata",
+                error instanceof Error
+                  ? error.message
+                  : "Ortak alan silinirken hata oluştu.",
+              );
             } finally {
               setIsHouseholdActionLoading(false);
             }
@@ -399,29 +391,23 @@ export default function SettingsScreen() {
             setIsHouseholdActionLoading(true);
 
             try {
-              const { error: targetError } = await supabase
-                .from("household_members")
-                .update({ role: "owner" })
-                .eq("household_id", household.id)
-                .eq("user_id", targetUserId);
+              const { error } = await supabase.rpc(
+                "transfer_ownership_and_leave",
+                {
+                  target_household_id: household.id,
 
-              if (targetError) {
-                showAlert("Devredilemedi", targetError.message);
-                return;
-              }
+                  new_owner_user_id: targetUserId,
+                },
+              );
 
-              const { error: leaveError } = await supabase
-                .from("household_members")
-                .delete()
-                .eq("household_id", household.id)
-                .eq("user_id", currentUserId);
+              if (error) {
+                showAlert("Devredilemedi", error.message);
 
-              if (leaveError) {
-                showAlert("Çıkılamadı", leaveError.message);
                 return;
               }
 
               setIsTransferModalVisible(false);
+
               router.replace("/(onboarding)");
             } finally {
               setIsHouseholdActionLoading(false);
