@@ -1,4 +1,3 @@
-import { AppScreen } from "@/components/AppScreen";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -13,6 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { AppScreen } from "../../components/AppScreen";
 
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
@@ -627,12 +627,8 @@ export default function TemplatesScreen() {
           }}
         >
           <KeyboardAvoidingView
-            style={{
-              width: "100%",
-              maxWidth: 390,
-            }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
+            style={{ width: "100%" }}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             <ScrollView
               keyboardShouldPersistTaps="handled"
@@ -644,6 +640,7 @@ export default function TemplatesScreen() {
               <View
                 style={{
                   width: "100%",
+                  maxWidth: 390,
                   borderRadius: 28,
                   backgroundColor: CARD_BG,
                   padding: 24,

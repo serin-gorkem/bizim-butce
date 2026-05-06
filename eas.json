@@ -8,8 +8,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "BURAYA_SUPABASE_URL",
-        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "BURAYA_SUPABASE_KEY"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ynphncdvqpvrituevcfb.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_lfQLG__3nkCwih4Q3YlqtA_Izlg4v5A"
       }
     },
     "production": {

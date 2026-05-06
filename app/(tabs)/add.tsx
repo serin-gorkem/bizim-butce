@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-import { AppScreen } from "@/components/AppScreen";
+import { AppScreen } from "../../components/AppScreen";
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
 import { showAlert } from "../../src/utils/appAlert";
@@ -64,6 +64,12 @@ export default function AddExpenseScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  function sanitizeDecimalInput(value: string) {
+    return value
+      .replace(",", ".")
+      .replace(/[^0-9.]/g, "")
+      .replace(/(\..*)\./g, "$1");
+  }
   async function loadAddScreenData() {
     setIsLoading(true);
     setErrorMessage("");
@@ -581,10 +587,11 @@ export default function AddExpenseScreen() {
 
           <TextInput
             value={amount}
-            onChangeText={setAmount}
+            onChangeText={(value) => setAmount(sanitizeDecimalInput(value))}
             placeholder="Örn: 350"
             placeholderTextColor="#B08A63"
             keyboardType="decimal-pad"
+            inputMode="decimal"
             style={{
               height: 56,
               borderRadius: 18,
@@ -819,8 +826,11 @@ export default function AddExpenseScreen() {
 
             <TextInput
               value={templateQuantity}
-              onChangeText={setTemplateQuantity}
+              onChangeText={(value) =>
+                setTemplateQuantity(sanitizeDecimalInput(value))
+              }
               keyboardType="decimal-pad"
+              inputMode="decimal"
               placeholder="Örn: 2"
               placeholderTextColor="#B08A63"
               style={{

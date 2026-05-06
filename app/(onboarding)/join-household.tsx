@@ -1,16 +1,16 @@
-import { AppScreen } from "@/components/AppScreen";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
+import { AppScreen } from "../../components/AppScreen";
 
 import { supabase } from "../../src/lib/supabase";
 import { showAlert } from "../../src/utils/appAlert";

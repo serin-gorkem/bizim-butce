@@ -1,6 +1,6 @@
-import { AppScreen } from "@/components/AppScreen";
 import { router } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { AppScreen } from "../../components/AppScreen";
 
 const mascotImage = require("../../assets/images/welcome-mascot.png");
 

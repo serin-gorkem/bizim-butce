@@ -1,4 +1,3 @@
-import { AppScreen } from "@/components/AppScreen";
 import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
@@ -12,6 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { AppScreen } from "../../components/AppScreen";
 
 import { supabase } from "../../src/lib/supabase";
 import { showAlert } from "../../src/utils/appAlert";
@@ -33,6 +33,7 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   async function handleRegister() {
     const trimmedFullName = fullName.trim();
@@ -276,26 +277,49 @@ export default function RegisterScreen() {
                 Şifre
               </Text>
 
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder="En az 6 karakter"
-                placeholderTextColor="#B08A63"
-                secureTextEntry
-                autoComplete="password-new"
-                textContentType="newPassword"
+              <View
                 style={{
                   height: 54,
                   borderRadius: 18,
                   borderWidth: 1,
                   borderColor: INPUT_BORDER,
                   backgroundColor: "#FFFFFF",
-                  paddingHorizontal: 16,
-                  fontSize: 16,
-                  color: TEXT_DARK,
+                  flexDirection: "row",
+                  alignItems: "center",
                   marginBottom: 20,
                 }}
-              />
+              >
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="En az 6 karakter"
+                  placeholderTextColor="#B08A63"
+                  secureTextEntry={!isPasswordVisible}
+                  style={{
+                    flex: 1,
+                    height: "100%",
+                    paddingHorizontal: 16,
+                    fontSize: 16,
+                    color: TEXT_DARK,
+                    borderTopLeftRadius: 16,
+                    borderBottomLeftRadius: 16,
+                  }}
+                />
+
+                <Pressable
+                  onPress={() => setIsPasswordVisible((current) => !current)}
+                  style={{
+                    width: 54,
+                    height: "100%",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ fontSize: 20 }}>
+                    {isPasswordVisible ? "🙈" : "👁️"}
+                  </Text>
+                </Pressable>
+              </View>
 
               <Pressable
                 onPress={handleRegister}

@@ -1,5 +1,3 @@
-import { AppScreen } from "@/components/AppScreen";
-import { ExpenseSwipeActions } from "@/components/ExpenseSwipeActions";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -11,6 +9,8 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { AppScreen } from "../../components/AppScreen";
+import { ExpenseSwipeActions } from "../../components/ExpenseSwipeActions";
 
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";

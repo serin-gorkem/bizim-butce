@@ -1,4 +1,4 @@
-import { AppScreen } from "@/components/AppScreen";
+import * as Clipboard from "expo-clipboard";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -8,11 +8,13 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   Text,
   TextInput,
   View,
 } from "react-native";
 
+import { AppScreen } from "../../components/AppScreen";
 import { getCurrentUserHousehold } from "../../src/lib/household";
 import { supabase } from "../../src/lib/supabase";
 import { showAlert } from "../../src/utils/appAlert";
@@ -25,6 +27,7 @@ const WARM_BROWN = "#92400E";
 const CARD_BG = "#FFF9F0";
 const SOFT_YELLOW = "#FDE68A";
 const INPUT_BORDER = "#FCD34D";
+const DANGER_RED = "#DC2626";
 
 type Profile = {
   id: string;
@@ -37,30 +40,56 @@ type HouseholdInfo = {
   invite_code: string;
 };
 
+type HouseholdMember = {
+  id: string;
+  user_id: string;
+  role: string;
+  profiles:
+    | {
+        full_name: string | null;
+      }
+    | {
+        full_name: string | null;
+      }[]
+    | null;
+};
+
 function getRoleLabel(role: string) {
-  if (role === "owner") {
-    return "Kurucu";
-  }
-
-  if (role === "member") {
-    return "Üye";
-  }
-
+  if (role === "owner") return "Kurucu";
+  if (role === "member") return "Üye";
   return role || "Bilinmiyor";
 }
 
+function getMemberFullName(member: HouseholdMember) {
+  const profile = Array.isArray(member.profiles)
+    ? member.profiles[0]
+    : member.profiles;
+
+  return profile?.full_name ?? "İsimsiz kullanıcı";
+}
+
 export default function SettingsScreen() {
+  const [currentUserId, setCurrentUserId] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [household, setHousehold] = useState<HouseholdInfo | null>(null);
   const [role, setRole] = useState("");
+  const [members, setMembers] = useState<HouseholdMember[]>([]);
 
   const [isEditNameModalVisible, setIsEditNameModalVisible] = useState(false);
+  const [isTransferModalVisible, setIsTransferModalVisible] = useState(false);
   const [editedFullName, setEditedFullName] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingName, setIsSavingName] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isHouseholdActionLoading, setIsHouseholdActionLoading] =
+    useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const isOwner = role === "owner";
+  const otherMembers = members.filter(
+    (member) => member.user_id !== currentUserId,
+  );
 
   async function loadSettingsData() {
     setIsLoading(true);
@@ -76,6 +105,8 @@ export default function SettingsScreen() {
         setErrorMessage("Kullanıcı bilgisi alınamadı.");
         return;
       }
+
+      setCurrentUserId(user.id);
 
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
@@ -95,6 +126,7 @@ export default function SettingsScreen() {
       if (!membership) {
         setHousehold(null);
         setRole("");
+        setMembers([]);
         return;
       }
 
@@ -111,6 +143,27 @@ export default function SettingsScreen() {
           invite_code: householdData.invite_code,
         });
       }
+
+      const { data: membersData, error: membersError } = await supabase
+        .from("household_members")
+        .select(
+          `
+          id,
+          user_id,
+          role,
+          profiles (
+            full_name
+          )
+        `,
+        )
+        .eq("household_id", membership.household_id);
+
+      if (membersError) {
+        setErrorMessage(membersError.message);
+        return;
+      }
+
+      setMembers((membersData ?? []) as HouseholdMember[]);
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Ayarlar yüklenemedi.",
@@ -159,9 +212,7 @@ export default function SettingsScreen() {
 
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({
-          full_name: cleanedFullName,
-        })
+        .update({ full_name: cleanedFullName })
         .eq("id", user.id);
 
       if (profileError) {
@@ -169,18 +220,9 @@ export default function SettingsScreen() {
         return;
       }
 
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          full_name: cleanedFullName,
-        },
+      await supabase.auth.updateUser({
+        data: { full_name: cleanedFullName },
       });
-
-      if (authError) {
-        showAlert(
-          "Profil güncellendi",
-          "İsim kaydedildi ancak oturum verisi güncellenemedi.",
-        );
-      }
 
       closeEditNameModal();
       await loadSettingsData();
@@ -198,12 +240,201 @@ export default function SettingsScreen() {
     }
   }
 
+  async function handleCopyInviteCode() {
+    if (!household?.invite_code) return;
+
+    await Clipboard.setStringAsync(household.invite_code);
+    showAlert("Kopyalandı", "Davet kodu panoya kopyalandı.");
+  }
+
+  async function handleShareInviteCode() {
+    if (!household?.invite_code) return;
+
+    try {
+      await Share.share({
+        message: `BizimBütçe ortak alan davet kodu: ${household.invite_code}`,
+      });
+    } catch (error) {
+      showAlert(
+        "Paylaşılamadı",
+        error instanceof Error ? error.message : "Davet kodu paylaşılamadı.",
+      );
+    }
+  }
+
+  async function handleLeaveHousehold() {
+    if (!household) {
+      showAlert("Ortak alan yok", "İşlem yapılacak ortak alan bulunamadı.");
+      return;
+    }
+
+    if (isOwner && otherMembers.length > 0) {
+      showAlert(
+        "Kuruculuk devredilmeli",
+        "Ortak alandan çıkmadan önce kuruculuğu başka bir üyeye devretmelisin.",
+        [
+          { text: "Vazgeç", style: "cancel" },
+          {
+            text: "Devret",
+            onPress: () => setIsTransferModalVisible(true),
+          },
+        ],
+      );
+      return;
+    }
+
+    if (isOwner && otherMembers.length === 0) {
+      showAlert(
+        "Ortak alanı sil",
+        "Bu ortak alanda senden başka kimse yok. Çıkarsan ortak alan tamamen silinir.",
+        [
+          { text: "Vazgeç", style: "cancel" },
+          {
+            text: "Sil",
+            style: "destructive",
+            onPress: handleDeleteHousehold,
+          },
+        ],
+      );
+      return;
+    }
+
+    showAlert(
+      "Ortak alandan çık",
+      "Bu ortak alandan çıkmak istediğine emin misin?",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Çık",
+          style: "destructive",
+          onPress: async () => {
+            setIsHouseholdActionLoading(true);
+
+            const { error } = await supabase
+              .from("household_members")
+              .delete()
+              .eq("household_id", household.id)
+              .eq("user_id", currentUserId);
+
+            setIsHouseholdActionLoading(false);
+
+            if (error) {
+              showAlert("Çıkılamadı", error.message);
+              return;
+            }
+
+            router.replace("/(onboarding)");
+          },
+        },
+      ],
+    );
+  }
+
+  async function handleDeleteHousehold() {
+    if (!household) return;
+
+    showAlert(
+      "Ortak alanı sil",
+      "Bu işlem tüm harcamaları, kategorileri, hazır harcamaları ve üyelikleri siler. Emin misin?",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Kalıcı Olarak Sil",
+          style: "destructive",
+          onPress: async () => {
+            setIsHouseholdActionLoading(true);
+
+            try {
+              const deleteSteps = [
+                supabase
+                  .from("expenses")
+                  .delete()
+                  .eq("household_id", household.id),
+                supabase
+                  .from("expense_templates")
+                  .delete()
+                  .eq("household_id", household.id),
+                supabase
+                  .from("categories")
+                  .delete()
+                  .eq("household_id", household.id),
+                supabase
+                  .from("household_members")
+                  .delete()
+                  .eq("household_id", household.id),
+                supabase.from("households").delete().eq("id", household.id),
+              ];
+
+              for (const step of deleteSteps) {
+                const { error } = await step;
+
+                if (error) {
+                  showAlert("Silinemedi", error.message);
+                  return;
+                }
+              }
+
+              router.replace("/(onboarding)");
+            } finally {
+              setIsHouseholdActionLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  async function handleTransferOwnership(targetUserId: string) {
+    if (!household || !currentUserId) return;
+
+    showAlert(
+      "Kuruculuğu devret",
+      "Kuruculuğu bu üyeye devredip ortak alandan çıkmak istiyor musun?",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Devret ve Çık",
+          style: "destructive",
+          onPress: async () => {
+            setIsHouseholdActionLoading(true);
+
+            try {
+              const { error: targetError } = await supabase
+                .from("household_members")
+                .update({ role: "owner" })
+                .eq("household_id", household.id)
+                .eq("user_id", targetUserId);
+
+              if (targetError) {
+                showAlert("Devredilemedi", targetError.message);
+                return;
+              }
+
+              const { error: leaveError } = await supabase
+                .from("household_members")
+                .delete()
+                .eq("household_id", household.id)
+                .eq("user_id", currentUserId);
+
+              if (leaveError) {
+                showAlert("Çıkılamadı", leaveError.message);
+                return;
+              }
+
+              setIsTransferModalVisible(false);
+              router.replace("/(onboarding)");
+            } finally {
+              setIsHouseholdActionLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
   async function handleLogout() {
     showAlert("Çıkış yap", "Hesabından çıkış yapmak istiyor musun?", [
-      {
-        text: "Vazgeç",
-        style: "cancel",
-      },
+      { text: "Vazgeç", style: "cancel" },
       {
         text: "Çıkış Yap",
         style: "destructive",
@@ -268,7 +499,7 @@ export default function SettingsScreen() {
           >
             <Text
               style={{
-                color: "#DC2626",
+                color: DANGER_RED,
                 textAlign: "center",
                 fontWeight: "900",
               }}
@@ -471,8 +702,29 @@ export default function SettingsScreen() {
                 borderWidth: 1,
                 borderColor: INPUT_BORDER,
                 marginBottom: 10,
+                position: "relative",
               }}
             >
+              <Pressable
+                onPress={handleCopyInviteCode}
+                style={{
+                  position: "absolute",
+                  top: 10,
+                  right: 10,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 12,
+                  backgroundColor: "#FFE8B8",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: SOFT_YELLOW,
+                  zIndex: 2,
+                }}
+              >
+                <Text style={{ fontSize: 17 }}>📋</Text>
+              </Pressable>
+
               <Text
                 style={{
                   fontSize: 13,
@@ -490,6 +742,7 @@ export default function SettingsScreen() {
                   color: WARM_BROWN,
                   fontWeight: "900",
                   letterSpacing: 2,
+                  paddingRight: 42,
                 }}
               >
                 {household.invite_code}
@@ -505,6 +758,7 @@ export default function SettingsScreen() {
                 paddingVertical: 7,
                 borderRadius: 999,
                 backgroundColor: "#FFE8B8",
+                marginBottom: 12,
               }}
             >
               <Text
@@ -518,11 +772,110 @@ export default function SettingsScreen() {
               </Text>
             </View>
           )}
+
+          <Pressable
+            onPress={handleShareInviteCode}
+            style={{
+              height: 46,
+              borderRadius: 16,
+              backgroundColor: PRIMARY_BLUE,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontWeight: "900" }}>
+              Davet Kodunu Paylaş
+            </Text>
+          </Pressable>
         </View>
 
         <View
           style={{
-            marginTop: 8,
+            padding: 18,
+            borderRadius: 26,
+            backgroundColor: CARD_BG,
+            borderWidth: 1,
+            borderColor: SOFT_YELLOW,
+            marginBottom: 16,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              color: TEXT_DARK,
+              fontWeight: "900",
+              marginBottom: 6,
+            }}
+          >
+            Ortak Alan İşlemleri
+          </Text>
+
+          <Text
+            style={{
+              fontSize: 13,
+              lineHeight: 19,
+              color: TEXT_MUTED,
+              fontWeight: "600",
+              marginBottom: 14,
+            }}
+          >
+            {isOwner
+              ? "Kurucu olduğun için çıkmadan önce sahipliği devredebilir veya ortak alanı silebilirsin."
+              : "Bu ortak alandan ayrılabilirsin. Harcamalar silinmez."}
+          </Text>
+
+          <Pressable
+            onPress={handleLeaveHousehold}
+            disabled={isHouseholdActionLoading}
+            style={{
+              height: 48,
+              borderRadius: 18,
+              backgroundColor: "#FFFFFF",
+              borderWidth: 1,
+              borderColor: "#FCA5A5",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: isOwner ? 10 : 0,
+            }}
+          >
+            <Text
+              style={{
+                color: DANGER_RED,
+                fontSize: 14,
+                fontWeight: "900",
+              }}
+            >
+              {isOwner ? "Devrederek Çık" : "Ortak Alandan Çık"}
+            </Text>
+          </Pressable>
+
+          {isOwner && (
+            <Pressable
+              onPress={handleDeleteHousehold}
+              disabled={isHouseholdActionLoading}
+              style={{
+                height: 48,
+                borderRadius: 18,
+                backgroundColor: DANGER_RED,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#FFFFFF",
+                  fontSize: 14,
+                  fontWeight: "900",
+                }}
+              >
+                Ortak Alanı Sil
+              </Text>
+            </Pressable>
+          )}
+        </View>
+
+        <View
+          style={{
             padding: 18,
             borderRadius: 26,
             backgroundColor: CARD_BG,
@@ -549,7 +902,7 @@ export default function SettingsScreen() {
             style={{
               height: 56,
               borderRadius: 20,
-              backgroundColor: isLoggingOut ? "#FCA5A5" : "#DC2626",
+              backgroundColor: isLoggingOut ? "#FCA5A5" : DANGER_RED,
               alignItems: "center",
               justifyContent: "center",
             }}
@@ -572,9 +925,7 @@ export default function SettingsScreen() {
         transparent
         animationType="fade"
         onRequestClose={() => {
-          if (!isSavingName) {
-            closeEditNameModal();
-          }
+          if (!isSavingName) closeEditNameModal();
         }}
       >
         <View
@@ -725,6 +1076,136 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
           </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={isTransferModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (!isHouseholdActionLoading) setIsTransferModalVisible(false);
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(59,36,20,0.45)",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              maxWidth: 390,
+              borderRadius: 28,
+              backgroundColor: CARD_BG,
+              padding: 24,
+              borderWidth: 1,
+              borderColor: SOFT_YELLOW,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: "900",
+                color: TEXT_DARK,
+                textAlign: "center",
+                marginBottom: 8,
+              }}
+            >
+              Kuruculuğu Devret
+            </Text>
+
+            <Text
+              style={{
+                fontSize: 15,
+                color: TEXT_MUTED,
+                textAlign: "center",
+                marginBottom: 18,
+                fontWeight: "600",
+              }}
+            >
+              Ortak alandan çıkmadan önce yeni kurucuyu seç.
+            </Text>
+
+            {otherMembers.length === 0 ? (
+              <Text
+                style={{
+                  color: TEXT_MUTED,
+                  textAlign: "center",
+                  fontWeight: "800",
+                  marginBottom: 12,
+                }}
+              >
+                Devredilecek başka üye yok.
+              </Text>
+            ) : (
+              otherMembers.map((member) => (
+                <Pressable
+                  key={member.id}
+                  onPress={() => handleTransferOwnership(member.user_id)}
+                  disabled={isHouseholdActionLoading}
+                  style={{
+                    padding: 14,
+                    borderRadius: 18,
+                    backgroundColor: "#FFFFFF",
+                    borderWidth: 1,
+                    borderColor: INPUT_BORDER,
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: TEXT_DARK,
+                      fontWeight: "900",
+                      fontSize: 15,
+                    }}
+                  >
+                    {getMemberFullName(member)}
+                  </Text>
+
+                  <Text
+                    style={{
+                      color: TEXT_MUTED,
+                      fontWeight: "700",
+                      fontSize: 13,
+                      marginTop: 2,
+                    }}
+                  >
+                    Yeni kurucu olarak seç
+                  </Text>
+                </Pressable>
+              ))
+            )}
+
+            <Pressable
+              onPress={() => setIsTransferModalVisible(false)}
+              disabled={isHouseholdActionLoading}
+              style={{
+                height: 54,
+                borderRadius: 20,
+                backgroundColor: "#FFFFFF",
+                borderWidth: 1,
+                borderColor: INPUT_BORDER,
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: 8,
+              }}
+            >
+              <Text
+                style={{
+                  color: WARM_BROWN,
+                  fontSize: 16,
+                  fontWeight: "900",
+                }}
+              >
+                Vazgeç
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </Modal>
     </AppScreen>
