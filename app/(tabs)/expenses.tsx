@@ -1,10 +1,11 @@
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Modal,
   Pressable,
+  ScrollView,
   Text,
   TextInput,
   View,
@@ -85,6 +86,37 @@ type Category = {
   sort_order: number;
 };
 
+type MonthlySummary = {
+  id: string;
+  household_id: string;
+  period_year: number;
+  period_month: number;
+  total_amount: number | string;
+  expense_count: number;
+  created_at: string;
+};
+
+const MONTH_NAMES_TR = [
+  "Ocak",
+  "Şubat",
+  "Mart",
+  "Nisan",
+  "Mayıs",
+  "Haziran",
+  "Temmuz",
+  "Ağustos",
+  "Eylül",
+  "Ekim",
+  "Kasım",
+  "Aralık",
+];
+
+function formatMonthTitle(year: number, month: number) {
+  const monthName = MONTH_NAMES_TR[month - 1] ?? "Bilinmeyen Ay";
+
+  return `${monthName} ${year}`;
+}
+
 function normalizeExpense(raw: ExpenseRaw): Expense {
   return {
     id: raw.id,
@@ -110,9 +142,99 @@ export default function ExpensesScreen() {
   const [editDescription, setEditDescription] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
 
+  const [filterCategoryId, setFilterCategoryId] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+
+  const [monthlySummaries, setMonthlySummaries] = useState<MonthlySummary[]>(
+    [],
+  );
+  const [isSummariesModalVisible, setIsSummariesModalVisible] = useState(false);
+  const [isSummariesLoading, setIsSummariesLoading] = useState(false);
+  const [summariesErrorMessage, setSummariesErrorMessage] = useState("");
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  async function loadMonthlySummaries() {
+    setIsSummariesLoading(true);
+    setSummariesErrorMessage("");
+
+    try {
+      const membership = await guardActiveHousehold();
+
+      if (!membership) {
+        setSummariesErrorMessage("Ortak alan bulunamadı.");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("monthly_expense_summaries")
+        .select(
+          `
+        id,
+        household_id,
+        period_year,
+        period_month,
+        total_amount,
+        expense_count,
+        created_at
+      `,
+        )
+        .eq("household_id", membership.household_id)
+        .order("period_year", { ascending: false })
+        .order("period_month", { ascending: false });
+
+      if (error) {
+        setSummariesErrorMessage(error.message);
+        return;
+      }
+
+      setMonthlySummaries((data ?? []) as MonthlySummary[]);
+    } catch (error) {
+      setSummariesErrorMessage(
+        error instanceof Error ? error.message : "Aylık özetler yüklenemedi.",
+      );
+    } finally {
+      setIsSummariesLoading(false);
+    }
+  }
+
+  async function openMonthlySummariesModal() {
+    setIsSummariesModalVisible(true);
+    await loadMonthlySummaries();
+  }
+
+  function closeMonthlySummariesModal() {
+    setIsSummariesModalVisible(false);
+  }
+
+  function getCurrentMonthRange() {
+    const now = new Date();
+
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    return {
+      startDate: start.toISOString(),
+      endDate: nextMonth.toISOString(),
+    };
+  }
+  function getPreviousMonth() {
+    const now = new Date();
+
+    const previousMonthDate = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1,
+    );
+
+    return {
+      year: previousMonthDate.getFullYear(),
+      month: previousMonthDate.getMonth() + 1,
+    };
+  }
 
   async function loadExpenses() {
     setIsLoading(true);
@@ -123,6 +245,21 @@ export default function ExpensesScreen() {
 
       if (!membership) {
         setErrorMessage("Ortak alan bulunamadı.");
+        return;
+      }
+
+      const previousMonth = getPreviousMonth();
+
+      const { error: closeMonthError } = await supabase.rpc(
+        "close_monthly_expenses",
+        {
+          target_year: previousMonth.year,
+          target_month: previousMonth.month,
+        },
+      );
+
+      if (closeMonthError) {
+        setErrorMessage(closeMonthError.message);
         return;
       }
 
@@ -139,29 +276,33 @@ export default function ExpensesScreen() {
 
       setCategories(categoriesData ?? []);
 
+      const { startDate, endDate } = getCurrentMonthRange();
+
       const { data, error } = await supabase
         .from("expenses")
         .select(
           `
-          id,
-          user_id,
-          category_id,
-          amount,
-          description,
-          spent_at,
-          entry_type,
-          quantity,
-          unit_price,
-          categories (
-            name,
-            slug
-          ),
-          profiles (
-            full_name
-          )
-        `,
+        id,
+        user_id,
+        category_id,
+        amount,
+        description,
+        spent_at,
+        entry_type,
+        quantity,
+        unit_price,
+        categories (
+          name,
+          slug
+        ),
+        profiles (
+          full_name
+        )
+      `,
         )
         .eq("household_id", membership.household_id)
+        .gte("spent_at", startDate)
+        .lt("spent_at", endDate)
         .order("spent_at", { ascending: false });
 
       if (error) {
@@ -182,12 +323,35 @@ export default function ExpensesScreen() {
       setIsLoading(false);
     }
   }
-
   useFocusEffect(
     useCallback(() => {
       loadExpenses();
     }, []),
   );
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter((expense) => {
+      const matchesCategory =
+        !filterCategoryId || expense.category_id === filterCategoryId;
+
+      const expenseDate = expense.spent_at.slice(0, 10);
+
+      const matchesStartDate =
+        !filterStartDate || expenseDate >= filterStartDate;
+
+      const matchesEndDate = !filterEndDate || expenseDate <= filterEndDate;
+
+      return matchesCategory && matchesStartDate && matchesEndDate;
+    });
+  }, [expenses, filterCategoryId, filterStartDate, filterEndDate]);
+
+  const hasActiveFilters =
+    !!filterCategoryId || !!filterStartDate || !!filterEndDate;
+
+  function clearFilters() {
+    setFilterCategoryId("");
+    setFilterStartDate("");
+    setFilterEndDate("");
+  }
 
   function openEditModal(expense: Expense) {
     setSelectedExpense(expense);
@@ -341,7 +505,7 @@ export default function ExpensesScreen() {
   return (
     <AppScreen backgroundColor={SCREEN_BG}>
       <FlatList
-        data={expenses}
+        data={filteredExpenses}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
           padding: 24,
@@ -405,10 +569,266 @@ export default function ExpensesScreen() {
                       fontWeight: "600",
                     }}
                   >
-                    Ortak alana girilen tüm harcamalar.
+                    Bu ay ortak alana girilen harcamalar.
                   </Text>
+
+                  <Pressable
+                    onPress={openMonthlySummariesModal}
+                    style={{
+                      marginTop: 14,
+                      alignSelf: "flex-start",
+                      paddingHorizontal: 14,
+                      height: 40,
+                      borderRadius: 14,
+                      backgroundColor: PRIMARY_BLUE,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "#FFFFFF",
+                        fontSize: 13,
+                        fontWeight: "900",
+                      }}
+                    >
+                      Aylık Özetler
+                    </Text>
+                  </Pressable>
                 </View>
               </View>
+            </View>
+            <View
+              style={{
+                padding: 18,
+                borderRadius: 26,
+                backgroundColor: CARD_BG,
+                borderWidth: 1,
+                borderColor: SOFT_YELLOW,
+                marginBottom: 20,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 14,
+                  gap: 12,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 20,
+                      fontWeight: "900",
+                      color: TEXT_DARK,
+                      marginBottom: 4,
+                    }}
+                  >
+                    Filtrele
+                  </Text>
+
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color: TEXT_MUTED,
+                      fontWeight: "700",
+                    }}
+                  >
+                    Kategoriye ve tarihe göre harcamaları süz.
+                  </Text>
+                </View>
+
+                {hasActiveFilters && (
+                  <Pressable
+                    onPress={clearFilters}
+                    style={{
+                      paddingHorizontal: 12,
+                      height: 38,
+                      borderRadius: 14,
+                      backgroundColor: "#FFFFFF",
+                      borderWidth: 1,
+                      borderColor: INPUT_BORDER,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: WARM_BROWN,
+                        fontSize: 13,
+                        fontWeight: "900",
+                      }}
+                    >
+                      Temizle
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: "900",
+                  color: TEXT_DARK,
+                  marginBottom: 8,
+                }}
+              >
+                Kategori
+              </Text>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  marginBottom: 16,
+                }}
+              >
+                <Pressable
+                  onPress={() => setFilterCategoryId("")}
+                  style={{
+                    paddingHorizontal: 12,
+                    height: 40,
+                    borderRadius: 14,
+                    backgroundColor: !filterCategoryId
+                      ? PRIMARY_BLUE
+                      : "#FFFFFF",
+                    borderWidth: 1,
+                    borderColor: !filterCategoryId
+                      ? PRIMARY_BLUE
+                      : INPUT_BORDER,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "900",
+                      color: !filterCategoryId ? "#FFFFFF" : WARM_BROWN,
+                    }}
+                  >
+                    Tümü
+                  </Text>
+                </Pressable>
+
+                {categories.map((category) => {
+                  const isSelected = filterCategoryId === category.id;
+
+                  return (
+                    <Pressable
+                      key={category.id}
+                      onPress={() => setFilterCategoryId(category.id)}
+                      style={{
+                        paddingHorizontal: 12,
+                        height: 40,
+                        borderRadius: 14,
+                        backgroundColor: isSelected ? PRIMARY_BLUE : "#FFFFFF",
+                        borderWidth: 1,
+                        borderColor: isSelected ? PRIMARY_BLUE : INPUT_BORDER,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: "900",
+                          color: isSelected ? "#FFFFFF" : WARM_BROWN,
+                        }}
+                      >
+                        {category.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: 10,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "900",
+                      color: TEXT_DARK,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Başlangıç
+                  </Text>
+
+                  <TextInput
+                    value={filterStartDate}
+                    onChangeText={setFilterStartDate}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#B08A63"
+                    autoCapitalize="none"
+                    style={{
+                      height: 48,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: INPUT_BORDER,
+                      backgroundColor: "#FFFFFF",
+                      paddingHorizontal: 12,
+                      fontSize: 14,
+                      fontWeight: "800",
+                      color: TEXT_DARK,
+                    }}
+                  />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "900",
+                      color: TEXT_DARK,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Bitiş
+                  </Text>
+
+                  <TextInput
+                    value={filterEndDate}
+                    onChangeText={setFilterEndDate}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#B08A63"
+                    autoCapitalize="none"
+                    style={{
+                      height: 48,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: INPUT_BORDER,
+                      backgroundColor: "#FFFFFF",
+                      paddingHorizontal: 12,
+                      fontSize: 14,
+                      fontWeight: "800",
+                      color: TEXT_DARK,
+                    }}
+                  />
+                </View>
+              </View>
+
+              {hasActiveFilters && (
+                <Text
+                  style={{
+                    marginTop: 14,
+                    fontSize: 13,
+                    color: TEXT_MUTED,
+                    fontWeight: "800",
+                  }}
+                >
+                  {filteredExpenses.length} harcama gösteriliyor.
+                </Text>
+              )}
             </View>
           </View>
         }
@@ -429,7 +849,9 @@ export default function ExpensesScreen() {
                 fontWeight: "800",
               }}
             >
-              Henüz harcama eklenmedi.
+              {hasActiveFilters
+                ? "Filtrelere uygun harcama bulunamadı."
+                : "Bu ay henüz harcama eklenmedi."}
             </Text>
           </View>
         }
@@ -762,6 +1184,235 @@ export default function ExpensesScreen() {
                 Vazgeç
               </Text>
             </Pressable>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={isSummariesModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeMonthlySummariesModal}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(59,36,20,0.45)",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <View
+            style={{
+              width: "100%",
+              maxWidth: 430,
+              maxHeight: "82%",
+              borderRadius: 28,
+              backgroundColor: CARD_BG,
+              padding: 22,
+              borderWidth: 1,
+              borderColor: SOFT_YELLOW,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 18,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 26,
+                    fontWeight: "900",
+                    color: TEXT_DARK,
+                    marginBottom: 4,
+                  }}
+                >
+                  Aylık Özetler
+                </Text>
+
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: TEXT_MUTED,
+                    fontWeight: "700",
+                  }}
+                >
+                  Kapanan ayların toplam harcamaları.
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={closeMonthlySummariesModal}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 14,
+                  backgroundColor: "#FFFFFF",
+                  borderWidth: 1,
+                  borderColor: INPUT_BORDER,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: WARM_BROWN,
+                    fontSize: 18,
+                    fontWeight: "900",
+                  }}
+                >
+                  ×
+                </Text>
+              </Pressable>
+            </View>
+
+            {isSummariesLoading ? (
+              <View
+                style={{
+                  paddingVertical: 34,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 12,
+                }}
+              >
+                <ActivityIndicator color={PRIMARY_BLUE} />
+
+                <Text
+                  style={{
+                    color: TEXT_MUTED,
+                    fontWeight: "800",
+                  }}
+                >
+                  Aylık özetler yükleniyor...
+                </Text>
+              </View>
+            ) : summariesErrorMessage ? (
+              <View
+                style={{
+                  padding: 18,
+                  borderRadius: 20,
+                  backgroundColor: "#FFF1F2",
+                  borderWidth: 1,
+                  borderColor: "#FCA5A5",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#DC2626",
+                    fontWeight: "900",
+                    textAlign: "center",
+                  }}
+                >
+                  {summariesErrorMessage}
+                </Text>
+              </View>
+            ) : monthlySummaries.length === 0 ? (
+              <View
+                style={{
+                  padding: 22,
+                  borderRadius: 22,
+                  backgroundColor: "#FFFFFF",
+                  borderWidth: 1,
+                  borderColor: INPUT_BORDER,
+                }}
+              >
+                <Text
+                  style={{
+                    color: TEXT_MUTED,
+                    textAlign: "center",
+                    fontWeight: "800",
+                  }}
+                >
+                  Henüz kapanmış ay özeti bulunmuyor.
+                </Text>
+              </View>
+            ) : (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingBottom: 4,
+                }}
+              >
+                {monthlySummaries.map((summary) => {
+                  const totalAmount = Number(summary.total_amount);
+
+                  return (
+                    <View
+                      key={summary.id}
+                      style={{
+                        padding: 16,
+                        borderRadius: 22,
+                        backgroundColor: "#FFFFFF",
+                        borderWidth: 1,
+                        borderColor: INPUT_BORDER,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={{
+                              fontSize: 20,
+                              fontWeight: "900",
+                              color: TEXT_DARK,
+                              marginBottom: 8,
+                            }}
+                          >
+                            {formatMonthTitle(
+                              summary.period_year,
+                              summary.period_month,
+                            )}
+                          </Text>
+
+                          <View
+                            style={{
+                              alignSelf: "flex-start",
+                              paddingHorizontal: 10,
+                              paddingVertical: 6,
+                              borderRadius: 999,
+                              backgroundColor: "#FFE8B8",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                fontWeight: "900",
+                                color: WARM_BROWN,
+                              }}
+                            >
+                              {summary.expense_count} harcama
+                            </Text>
+                          </View>
+                        </View>
+
+                        <Text
+                          style={{
+                            fontSize: 17,
+                            fontWeight: "900",
+                            color: WARM_BROWN,
+                            textAlign: "right",
+                          }}
+                        >
+                          {formatCurrency(totalAmount)}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>
